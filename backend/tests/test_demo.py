@@ -1,9 +1,11 @@
 from datetime import date, datetime
 
+import pytest
 from sqlalchemy.orm import Session
 
 from tabernas.demo import seed_demo_data
-from tabernas.domain.types import Outcome, WarningCode
+from tabernas.domain.types import Area, Outcome, WarningCode
+from tabernas.domain.validation import DomainValidationError
 from tabernas.repos.employees import EmployeeRepo
 from tabernas.services.attendance import AttendanceService
 from tabernas.sr.fake_source import FakeSource
@@ -14,6 +16,36 @@ def test_seed_is_idempotent(session: Session) -> None:
     assert seed_demo_data(session) == []
     manager = next(e for e in EmployeeRepo(session).find_all() if e.sr_id == 100)
     assert (manager.tracks_attendance, manager.applies_lateness) == (False, False)
+
+
+def test_seed_refuses_when_a_real_employee_exists(session: Session) -> None:
+    employees = EmployeeRepo(session)
+    employees.create(
+        sr_id=999,
+        short_name="EMPLEADO REAL",
+        rh_name="Empleado Real",
+        area=Area.OTHER,
+        applies_lateness=True,
+        tracks_attendance=True,
+    )
+    with pytest.raises(DomainValidationError, match="empleados reales"):
+        seed_demo_data(session)
+    assert employees.find_all() == [employees.find_all()[0]]
+
+
+def test_seed_refuses_when_a_real_employee_has_no_sr_id(session: Session) -> None:
+    employees = EmployeeRepo(session)
+    employees.create(
+        sr_id=None,
+        short_name="EMPLEADO SIN SR",
+        rh_name="Empleado Sin SR",
+        area=Area.OTHER,
+        applies_lateness=False,
+        tracks_attendance=False,
+    )
+    with pytest.raises(DomainValidationError, match="empleados reales"):
+        seed_demo_data(session)
+    assert len(employees.find_all()) == 1
 
 
 def test_seeded_data_matches_fake_source(session: Session) -> None:

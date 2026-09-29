@@ -9,6 +9,7 @@ import sys
 from tabernas.config import get_settings
 from tabernas.db.session import make_engine, make_session_factory
 from tabernas.demo import seed_demo_data
+from tabernas.domain.validation import DomainValidationError
 
 
 def main() -> int:
@@ -18,7 +19,11 @@ def main() -> int:
         return 1
     factory = make_session_factory(make_engine(settings.database_url))
     with factory() as session:
-        created = seed_demo_data(session)
+        try:
+            created = seed_demo_data(session)
+        except DomainValidationError as exc:
+            print(str(exc))
+            return 1
         session.commit()
     print(f"Empleados demo creados: {len(created)}")
     return 0
