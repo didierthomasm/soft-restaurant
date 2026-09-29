@@ -1,7 +1,9 @@
 from datetime import date
+from io import BytesIO
 
 import pytest
 from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 from sqlalchemy.orm import Session, sessionmaker
 
 from tabernas.demo import seed_demo_data
@@ -58,3 +60,15 @@ def test_sr_down_is_503(make_client: MakeClient) -> None:
     response = client.get("/attendance/calendar", params=WEEK)
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "SR_UNAVAILABLE"
+
+
+def test_export_xlsx(demo_client: TestClient) -> None:
+    response = demo_client.get("/attendance/export.xlsx", params=WEEK)
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    disposition = response.headers["content-disposition"]
+    assert 'filename="asistencia_2026-09-21_2026-09-27.xlsx"' in disposition
+    workbook = load_workbook(BytesIO(response.content))
+    assert workbook["Calendario"].max_row == 8  # header + 7 employees

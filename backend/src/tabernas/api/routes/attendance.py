@@ -2,12 +2,14 @@ from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
 
 from tabernas.api.deps import ClockDep, SessionDep, SrSourceDep
 from tabernas.api.envelope import Envelope, ok
 from tabernas.domain.summary import EmployeeSummary, Grouping, summarize
 from tabernas.domain.types import Area, Outcome, Planned, RhType, WarningCode
+from tabernas.export.xlsx import XLSX_MEDIA_TYPE, build_workbook
 from tabernas.services.attendance import AttendanceReport, AttendanceService
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -146,3 +148,19 @@ def summary(
 ) -> Envelope[list[SummaryOut]]:
     report = service.build(start, end)
     return ok([summary_out(s) for s in summarize(report.results, group)])
+
+
+@router.get(
+    "/export.xlsx",
+    response_class=Response,
+    responses={200: {"content": {XLSX_MEDIA_TYPE: {}}, "description": "Libro de Excel"}},
+)
+def export_xlsx(start: StartQuery, end: EndQuery, service: ServiceDep) -> Response:
+    report = service.build(start, end)
+    content = build_workbook(report, summarize(report.results, Grouping.WEEK))
+    filename = f"asistencia_{start.isoformat()}_{end.isoformat()}.xlsx"
+    return Response(
+        content=content,
+        media_type=XLSX_MEDIA_TYPE,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
