@@ -29,6 +29,14 @@ coding a stage:
 - Sales periods filter on `cheques.cierre`, not `fecha` (the bar closes after
   midnight). Line revenue applies both line and ticket discounts.
 - SR "`.XLS`" exports are actually xlsx.
+- macOS: `No module named 'tabernas'` → uv marks the editable-install `.pth` hidden and
+  Python 3.12.13 skips hidden `.pth` files; run
+  `chflags nohidden backend/.venv/lib/python3.12/site-packages/*.pth` (uv re-hides it
+  whenever it reinstalls the project), or run tests with `.venv/bin/python -m pytest`.
+- `scripts/create_readonly_user.py` is the only sanctioned use of `sa` (one-off,
+  already done); the app refuses `SR_DB_USER=sa`.
+- Demo data (`seed_demo.py`) refuses to run on a database that already has real
+  employees.
 
 ## Conventions
 
