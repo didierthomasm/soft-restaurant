@@ -35,6 +35,8 @@ class Settings(BaseSettings):
         missing = [name for name, value in required.items() if not value]
         if missing:
             raise ValueError(f"Faltan variables para SR_MODE=live: {', '.join(missing)}")
+        if self.sr_db_user.strip().lower() == "sa":
+            raise ValueError("SR_DB_USER no puede ser 'sa'; usa reportes_ro (solo lectura)")
         return self
 
 

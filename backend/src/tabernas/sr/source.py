@@ -14,7 +14,7 @@ class SrUnavailableError(RuntimeError):
 
 
 class SrNotReadOnlyError(RuntimeError):
-    """The configured SR login can write. The app refuses to use it."""
+    """Raised by GET /health/sr when the configured SR login is not read-only."""
 
 
 class _Frozen(BaseModel):

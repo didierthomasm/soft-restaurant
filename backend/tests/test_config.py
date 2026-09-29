@@ -21,6 +21,28 @@ def test_live_mode_requires_host_and_password() -> None:
         Settings(_env_file=None, sr_mode="live")  # type: ignore[call-arg]
 
 
+def test_live_mode_refuses_sa_login() -> None:
+    with pytest.raises(ValidationError, match="sa"):
+        Settings(
+            _env_file=None,  # type: ignore[call-arg]
+            sr_mode="live",
+            sr_db_host="10.0.0.1",
+            sr_db_password="secret",  # type: ignore[arg-type]
+            sr_db_user="sa",
+        )
+
+
+def test_live_mode_refuses_sa_login_case_insensitive_with_whitespace() -> None:
+    with pytest.raises(ValidationError, match="sa"):
+        Settings(
+            _env_file=None,  # type: ignore[call-arg]
+            sr_mode="live",
+            sr_db_host="10.0.0.1",
+            sr_db_password="secret",  # type: ignore[arg-type]
+            sr_db_user=" SA ",
+        )
+
+
 def test_live_mode_accepts_complete_config() -> None:
     settings = Settings(
         _env_file=None,  # type: ignore[call-arg]
