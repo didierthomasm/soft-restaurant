@@ -24,7 +24,7 @@ packages = ["src/tabernas"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["."]
 addopts = "-m 'not sr' --strict-markers"
 markers = ["sr: needs the live SoftRestaurant server (local only, never in CI)"]
 
