@@ -1,0 +1,26 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Business data (employee names, sales) — never commit
+db_examples/
+exports/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Editors / OS
+.idea/
+.DS_Store
+
+# Private business data (names, IPs, reconciliation figures)
+docs/private/
+
+# Node / frontend (Plan B)
+node_modules/
+.next/
