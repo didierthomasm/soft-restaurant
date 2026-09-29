@@ -72,3 +72,13 @@ def test_export_xlsx(demo_client: TestClient) -> None:
     assert 'filename="asistencia_2026-09-21_2026-09-27.xlsx"' in disposition
     workbook = load_workbook(BytesIO(response.content))
     assert workbook["Calendario"].max_row == 8  # header + 7 employees
+
+
+def test_export_xlsx_summary_grouped_by_month(demo_client: TestClient) -> None:
+    params = {"from": "2026-09-01", "to": "2026-09-30", "group": "month"}
+    response = demo_client.get("/attendance/export.xlsx", params=params)
+    assert response.status_code == 200
+    workbook = load_workbook(BytesIO(response.content))
+    resumen = workbook["Resumen"]
+    periods = {str(row[1].value) for row in resumen.iter_rows(min_row=2)}
+    assert periods == {"2026-09"}

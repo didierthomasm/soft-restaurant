@@ -155,9 +155,11 @@ def summary(
     response_class=Response,
     responses={200: {"content": {XLSX_MEDIA_TYPE: {}}, "description": "Libro de Excel"}},
 )
-def export_xlsx(start: StartQuery, end: EndQuery, service: ServiceDep) -> Response:
+def export_xlsx(
+    start: StartQuery, end: EndQuery, service: ServiceDep, group: Grouping = Grouping.WEEK
+) -> Response:
     report = service.build(start, end)
-    content = build_workbook(report, summarize(report.results, Grouping.WEEK))
+    content = build_workbook(report, summarize(report.results, group))
     filename = f"asistencia_{start.isoformat()}_{end.isoformat()}.xlsx"
     return Response(
         content=content,
