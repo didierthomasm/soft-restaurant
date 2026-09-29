@@ -49,7 +49,8 @@ def compare(
         _evaluate(day_plan, by_id[day_plan.employee_id], firsts, settings, today, now)
         for day_plan in planned
     ]
-    return results, _unmapped_warnings(firsts, planned, by_id)
+    warnings = _unmapped_warnings(firsts, planned, by_id) + _no_sr_id_warnings(planned, by_id)
+    return results, warnings
 
 
 def _evaluate(
@@ -122,4 +123,28 @@ def _unmapped_warnings(
         )
         for sr_id, day in sorted(firsts)
         if sr_id not in mapped
+    ]
+
+
+def _no_sr_id_warnings(
+    planned: Sequence[PlannedDay], by_id: Mapping[int, Employee]
+) -> list[AttendanceWarning]:
+    """One warning per employee that tracks attendance but has no SR id (every workday
+    would otherwise silently come out as an unexplained absence)."""
+    first_day: dict[int, date] = {}
+    for day_plan in planned:
+        employee = by_id[day_plan.employee_id]
+        if employee.sr_id is not None or not employee.tracks_attendance:
+            continue
+        current = first_day.get(employee.id)
+        if current is None or day_plan.day < current:
+            first_day[employee.id] = day_plan.day
+    return [
+        AttendanceWarning(
+            WarningCode.NO_SR_ID,
+            employee_id,
+            day,
+            f"{by_id[employee_id].short_name} no tiene id de SR; sus días salen como falta",
+        )
+        for employee_id, day in sorted(first_day.items())
     ]

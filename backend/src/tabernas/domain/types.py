@@ -60,6 +60,7 @@ class WarningCode(StrEnum):
     UNMAPPED_CHECKIN = "UNMAPPED_CHECKIN"
     ORPHAN_JUSTIFICATION = "ORPHAN_JUSTIFICATION"
     MISSING_RH_NAME = "MISSING_RH_NAME"
+    NO_SR_ID = "NO_SR_ID"
 
 
 @dataclass(frozen=True)

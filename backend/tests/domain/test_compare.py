@@ -155,3 +155,31 @@ def test_checkins_of_deactivated_employee_are_reported_not_lost() -> None:
         EVENING,
     )
     assert [w.code for w in warnings] == [WarningCode.UNMAPPED_CHECKIN]
+
+
+def test_employee_without_sr_id_that_tracks_attendance_is_warned_once() -> None:
+    no_sr_id = replace(employee(1, tracks_attendance=True), sr_id=None)
+    day_two = date(2026, 9, 24)
+    _, warnings = compare(
+        [planned(DAY, employee_id=1), planned(day_two, employee_id=1)],
+        [no_sr_id],
+        [],
+        DEFAULT_SETTINGS,
+        date(2026, 9, 27),
+        EVENING,
+    )
+    assert [(w.code, w.employee_id, w.day) for w in warnings] == [(WarningCode.NO_SR_ID, 1, DAY)]
+    assert "E1" in warnings[0].detail
+
+
+def test_employee_without_sr_id_that_does_not_track_attendance_is_not_warned() -> None:
+    manager = replace(employee(1, tracks_attendance=False), sr_id=None)
+    _, warnings = compare(
+        [planned(DAY, employee_id=1)],
+        [manager],
+        [],
+        DEFAULT_SETTINGS,
+        date(2026, 9, 27),
+        EVENING,
+    )
+    assert warnings == []
