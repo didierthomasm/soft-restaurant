@@ -4,8 +4,12 @@ from datetime import date
 
 from tabernas.domain.types import (
     Area,
+    DayResult,
     Employee,
     ExceptionKind,
+    Incident,
+    Justification,
+    Outcome,
     Planned,
     PlannedDay,
     RestRule,
@@ -96,4 +100,48 @@ def planned(
         rh_type=rh_type,
         present_no_checkin=present_no_checkin,
         manual_absence=manual_absence,
+    )
+
+
+DAY = date(2026, 9, 23)
+
+_PLANNED_FOR_OUTCOME = {
+    Outcome.REST: Planned.REST,
+    Outcome.UNREGISTERED_CHANGE: Planned.REST,
+    Outcome.CLOSED: Planned.CLOSED,
+    Outcome.JUSTIFIED: Planned.ABSENCE,
+}
+
+
+def result(
+    outcome: Outcome,
+    *,
+    employee_id: int = 1,
+    day: date = DAY,
+    rh_type: RhType | None = None,
+    justification_id: int | None = None,
+    comment: str = "",
+) -> DayResult:
+    return DayResult(
+        employee_id=employee_id,
+        day=day,
+        planned=_PLANNED_FOR_OUTCOME.get(outcome, Planned.WORK),
+        outcome=outcome,
+        rh_type=rh_type,
+        justification_id=justification_id,
+        comment=comment,
+    )
+
+
+def justification(
+    incident: Incident,
+    rh_type: RhType,
+    *,
+    employee_id: int = 1,
+    day: date = DAY,
+    id: int = 7,
+    reason: str = "Cita médica",
+) -> Justification:
+    return Justification(
+        id=id, employee_id=employee_id, day=day, incident=incident, reason=reason, rh_type=rh_type
     )
