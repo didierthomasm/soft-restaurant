@@ -1,6 +1,14 @@
 from fastapi import APIRouter
 
-from tabernas.api.routes import employees, exceptions, health, justifications, rest_rules, settings
+from tabernas.api.routes import (
+    attendance,
+    employees,
+    exceptions,
+    health,
+    justifications,
+    rest_rules,
+    settings,
+)
 
 ROUTERS: list[APIRouter] = [
     health.router,
@@ -9,4 +17,5 @@ ROUTERS: list[APIRouter] = [
     rest_rules.router,
     exceptions.router,
     justifications.router,
+    attendance.router,
 ]
