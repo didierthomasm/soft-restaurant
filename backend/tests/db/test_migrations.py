@@ -24,7 +24,7 @@ def test_migrations_match_models_and_seed_settings(engine: Engine) -> None:
         command.upgrade(cfg, "head")
         command.check(cfg)  # raises if the models and the migrated schema differ
         with engine.connect() as conn:
-            stored = dict(conn.execute(text("SELECT key, value FROM setting")).tuples().all())
+            stored = dict(conn.execute(text("SELECT key, value FROM setting")).all())
         assert stored == {
             "entry_time_kitchen": "16:30",
             "entry_time_other": "16:40",

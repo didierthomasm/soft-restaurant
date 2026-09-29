@@ -24,7 +24,7 @@ services:
       - path: .env
         required: false  # CI and the public demo run without a .env
     environment:
-      SR_MODE: ${SR_MODE:-live}
+      SR_MODE: ${SR_MODE:-fake}  # safe default for a fresh clone without .env; the real machine's .env sets SR_MODE=live
       DATABASE_URL: postgresql+psycopg://tabernas:${POSTGRES_PASSWORD:-tabernas}@db:5432/tabernas
       FREETDSCONF: /etc/freetds/freetds.conf
     volumes:
