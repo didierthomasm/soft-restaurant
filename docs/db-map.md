@@ -19,6 +19,10 @@ los scripts lo cargan vía `FREETDSCONF`. Sin eso: error 20002.
 **Límites de Express:** 1 socket / 4 cores, 1410 MB de buffer pool. Consultas de
 reporte deben ser acotadas por fecha y usar `WITH (NOLOCK)` para no bloquear al POS.
 
+**Acceso desde Docker:** el contenedor `backend` alcanza SR a través del Tailscale del
+host (Docker Desktop enruta por la red de macOS); `freetds.conf` se monta en
+`/etc/freetds/freetds.conf`. Verificado el 2026-09-29 con `scripts/check_connection.py`.
+
 ## Asistencia
 
 ### `registroasistencias` (2,527 filas)
