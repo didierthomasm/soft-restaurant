@@ -292,7 +292,7 @@ contenido, no estilos.
 - Next.js (App Router), TypeScript, Tailwind, shadcn/ui, TanStack Query; tipos
   generados con `openapi-typescript` desde `/openapi.json` (script `gen:api`,
   archivo generado versionado).
-- El navegador solo habla con Next.js: `rewrites` de `/api/*` → `BACKEND_URL`.
+- El navegador solo habla con Next.js: `rewrites` de `/backend/*` → `BACKEND_URL`.
 - **Login falso (D4)**: `/login` → route handler compara con `FAKE_AUTH_USER` /
   `FAKE_AUTH_PASSWORD` y pone cookie `httpOnly` `tc_session`; `proxy.ts` (Next 16 renombró `middleware`)
   redirige a `/login` sin cookie; botón "Salir" la borra. Todo en `lib/auth/` para
