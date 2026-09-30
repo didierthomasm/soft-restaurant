@@ -25,6 +25,18 @@ CI); acceptance with the manager is pending.
 - `api/` — thin routers, response envelope `{success, data, error, meta}`, error mapping.
 - `export/` — Excel workbook (Spanish labels).
 
+## Frontend layout (`frontend/src/`)
+
+- `proxy.ts` — fake-login guard: every route except `/login` and `/auth/*` needs the
+  session cookie; `/backend/*` without it gets a 401 JSON envelope.
+- `lib/api/` — generated `schema.d.ts` (never hand-write API types), `client.ts`
+  (`openapi-fetch` + `unwrap()` turning the envelope into data or `ApiError`), and the
+  TanStack Query hooks (`attendance.ts`, `config.ts`).
+- `lib/auth/` — all fake-login logic (credentials, cookie, safe `?next=`), replaceable.
+- `lib/*.ts` — pure utilities (dates, labels, TSV, period) with Vitest tests.
+- `components/` are presentational; `app/` pages orchestrate them. The browser only
+  calls `/backend/...`, never the API directly.
+
 ## Hard rules
 
 - **SR is a live production POS. Read-only, always.** Connect only as `reportes_ro`.
