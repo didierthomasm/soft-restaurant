@@ -29,5 +29,8 @@ export function safeNext(value: string | undefined): string {
   if (!value || !value.startsWith("/") || value.startsWith("//") || UNSAFE_CHARS.test(value)) {
     return DEFAULT_AFTER_LOGIN;
   }
-  return value;
+  // Dot segments ("/.//evil.com") normalize to "//evil.com": verify the parsed result too.
+  const url = new URL(value, "http://x");
+  if (url.origin !== "http://x" || url.pathname.startsWith("//")) return DEFAULT_AFTER_LOGIN;
+  return url.pathname + url.search + url.hash;
 }

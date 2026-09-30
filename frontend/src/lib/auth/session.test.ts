@@ -48,6 +48,8 @@ describe("safeNext", () => {
     "/\t/evil.com",
     "/\n/evil.com",
     "/\r/evil.com",
+    "/.//evil.com",
+    "/%2e//evil.com",
     "semana",
   ])("falls back to /semana for %s", (value) => {
     expect(safeNext(value)).toBe("/semana");

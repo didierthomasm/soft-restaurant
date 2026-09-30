@@ -16,6 +16,8 @@ export class ApiError extends Error {
   }
 }
 
+const SERVER_DOWN_MESSAGE = "El servidor no responde; intenta de nuevo";
+
 type ErrorBody = { code: string; message: string };
 type Enveloped<T> = { success: boolean; data?: T | null; error?: ErrorBody | null };
 type FetchResult<T> = { data?: Enveloped<T>; error?: unknown; response: Response };
@@ -40,9 +42,13 @@ export async function unwrap<T>(request: Promise<FetchResult<T>>): Promise<T> {
   const body = errorBody(error ?? data);
   throw new ApiError(
     body?.code ?? "HTTP_ERROR",
-    body?.message ?? `Error ${response.status}`,
+    body?.message ?? fallbackMessage(response.status),
     response.status,
   );
+}
+
+function fallbackMessage(status: number): string {
+  return status >= 500 ? SERVER_DOWN_MESSAGE : `Error ${status}`;
 }
 
 export function isSrUnavailable(error: unknown): boolean {

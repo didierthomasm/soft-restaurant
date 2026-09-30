@@ -33,6 +33,14 @@ describe("unwrap", () => {
     await expect(unwrap(request)).rejects.toMatchObject({ code: "HTTP_ERROR", status: 502 });
   });
 
+  it("uses a friendly message for non-envelope 5xx responses", async () => {
+    const request = Promise.resolve({ error: "Bad Gateway", response: response(502) });
+    await expect(unwrap(request)).rejects.toMatchObject({
+      code: "HTTP_ERROR",
+      message: "El servidor no responde; intenta de nuevo",
+    });
+  });
+
   it("maps network failures to NETWORK_ERROR", async () => {
     const request = Promise.reject(new TypeError("fetch failed"));
     await expect(unwrap(request)).rejects.toMatchObject({ code: "NETWORK_ERROR", status: 0 });
