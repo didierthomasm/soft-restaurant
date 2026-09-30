@@ -25,3 +25,4 @@ export type Incident = Schemas["Incident"];
 export type ExceptionKind = Schemas["ExceptionKind"];
 export type Area = Schemas["Area"];
 export type WarningCode = Schemas["WarningCode"];
+export type Grouping = Schemas["Grouping"];

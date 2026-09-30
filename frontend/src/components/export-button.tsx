@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
+import type { Grouping } from "@/lib/api/types";
 
-type Props = { from: string; to: string; group: "week" | "month" };
+type Props = { from: string; to: string; group: Grouping };
 
 /** `group` sets how the workbook's summary sheet is grouped (backend default: week). */
 export function ExportButton({ from, to, group }: Props) {
