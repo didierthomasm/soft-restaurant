@@ -27,6 +27,9 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-m 'not sr' --strict-markers"
 markers = ["sr: needs the live SoftRestaurant server (local only, never in CI)"]
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated.*:starlette.exceptions.StarletteDeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100
@@ -39,6 +42,8 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 include = ["src", "tests"]
 pythonVersion = "3.12"
 typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
 
 [tool.coverage.run]
 source = ["tabernas"]

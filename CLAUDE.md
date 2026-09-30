@@ -29,6 +29,14 @@ coding a stage:
 - Sales periods filter on `cheques.cierre`, not `fecha` (the bar closes after
   midnight). Line revenue applies both line and ticket discounts.
 - SR "`.XLS`" exports are actually xlsx.
+- macOS: `No module named 'tabernas'` → uv marks the editable-install `.pth` hidden and
+  Python 3.12.13 skips hidden `.pth` files; run
+  `chflags nohidden backend/.venv/lib/python3.12/site-packages/*.pth` (uv re-hides it
+  whenever it reinstalls the project), or run tests with `.venv/bin/python -m pytest`.
+- `scripts/create_readonly_user.py` is the only sanctioned use of `sa` (one-off,
+  already done); the app refuses `SR_DB_USER=sa`.
+- Demo data (`seed_demo.py`) refuses to run on a database that already has real
+  employees.
 
 ## Conventions
 
@@ -42,7 +50,13 @@ coding a stage:
 
 ## Commands
 
-- Check SR connectivity (reads `.env`): `uv run scripts/check_connection.py`
+- Start everything: `docker compose up --build` (API docs at http://127.0.0.1:8000/docs)
+- Backend tests (from `backend/`, needs `docker compose up -d db`): `uv run pytest`
+- Live SR tests (local only, never CI): `uv run pytest -m sr`
+- Lint and types (from `backend/`): `uv run ruff check . && uv run ruff format --check . && uv run pyright`
+- Check SR connectivity: `uv run --project backend scripts/check_connection.py`
+- Reconcile SR check-ins vs an SR export: `uv run --project backend scripts/reconcile_attendance.py --from YYYY-MM-DD --to YYYY-MM-DD --export db_examples/ASISTENCIA_EMPLEADOS.XLS`
+- Demo data (only with `SR_MODE=fake`): `docker compose run --rm -e SR_MODE=fake backend python /scripts/seed_demo.py`
 
 ## Important - debugging and fixing
 
