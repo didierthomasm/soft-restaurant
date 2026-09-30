@@ -35,3 +35,6 @@ frontend/CLAUDE.md
 frontend/playwright-report/
 frontend/test-results/
 frontend/coverage/
+
+# CI diagnostics
+compose.log

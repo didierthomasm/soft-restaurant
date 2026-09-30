@@ -71,7 +71,7 @@ CI); acceptance with the manager is pending.
 
 ## Commands
 
-- Start everything: `docker compose up --build` (API docs at http://127.0.0.1:8000/docs)
+- Start everything (default project, uses `.env`, live SR): `docker compose up --build` (API docs at http://127.0.0.1:8000/docs)
 - Backend tests (from `backend/`, needs `docker compose up -d db`): `uv run pytest`
 - Coverage gates as in CI (from `backend/`): `uv run pytest --cov && uv run coverage report --include="*/tabernas/domain/*" --fail-under=95`
 - Live SR tests (local only, never CI): `uv run pytest -m sr`
@@ -79,7 +79,6 @@ CI); acceptance with the manager is pending.
 - Lint and types (from `backend/`): `uv run ruff check . && uv run ruff format --check . && uv run pyright`
 - Check SR connectivity: `uv run --project backend scripts/check_connection.py`
 - Reconcile SR check-ins vs an SR export: `uv run --project backend scripts/reconcile_attendance.py --from YYYY-MM-DD --to YYYY-MM-DD --export db_examples/ASISTENCIA_EMPLEADOS.XLS`
-- Demo data (only with `SR_MODE=fake`): `docker compose run --rm -e SR_MODE=fake backend python /scripts/seed_demo.py`
 - Configure real employees and rest rules (private, idempotent): `python3 docs/private/setup_employees.py --dry-run`, then without `--dry-run`
 - Frontend dev (from `frontend/`, backend at :8000): `BACKEND_URL=http://127.0.0.1:8000 FAKE_AUTH_USER=demo FAKE_AUTH_PASSWORD=demo npm run dev`
 - Frontend checks (from `frontend/`): `npm run lint && npm run typecheck && npm test`
