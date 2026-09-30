@@ -4,7 +4,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api, unwrap } from "./client";
 import { useInvalidate } from "./invalidate";
-import type { ExceptionCreate, Grouping, JustificationCreate, RestSwapCreate } from "./types";
+import type {
+  ExceptionCreate,
+  Grouping,
+  JustificationCreate,
+  JustificationUpdate,
+  RestSwapCreate,
+} from "./types";
 
 export const attendanceKeys = {
   all: ["attendance"] as const,
@@ -40,6 +46,33 @@ export function useCreateJustification() {
   const invalidate = useInvalidate(attendanceKeys.all);
   return useMutation({
     mutationFn: (body: JustificationCreate) => unwrap(api.POST("/justifications", { body })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateJustification() {
+  const invalidate = useInvalidate(attendanceKeys.all);
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: JustificationUpdate }) =>
+      unwrap(
+        api.PATCH("/justifications/{justification_id}", {
+          params: { path: { justification_id: id } },
+          body,
+        }),
+      ),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteJustification() {
+  const invalidate = useInvalidate(attendanceKeys.all);
+  return useMutation({
+    mutationFn: (id: number) =>
+      unwrap(
+        api.DELETE("/justifications/{justification_id}", {
+          params: { path: { justification_id: id } },
+        }),
+      ),
     onSuccess: invalidate,
   });
 }

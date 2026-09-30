@@ -11,6 +11,7 @@ import { formatDay, formatTime } from "@/lib/dates";
 import { OUTCOME_LABELS, RH_LABELS, incidentFor } from "@/lib/labels";
 
 import { ExceptionForm } from "./exception-form";
+import { JustificationEdit } from "./justification-edit";
 import { JustifyForm } from "./justify-form";
 import { RestSwapForm } from "./rest-swap-form";
 import type { DaySelection } from "./week-grid";
@@ -48,9 +49,18 @@ function DayDetail({ selection, onDone }: { selection: DaySelection; onDone: () 
         <SheetDescription>{describe(selection)}</SheetDescription>
       </SheetHeader>
       <div className="space-y-8 p-4">
-        {day.comment && <p className="text-sm">{day.comment}</p>}
+        {day.comment && day.justification_id === null && <p className="text-sm">{day.comment}</p>}
         {incident && day.justification_id === null && (
           <JustifyForm employeeId={employee.id} day={day.day} incident={incident} onDone={onDone} />
+        )}
+        {incident && day.justification_id !== null && (
+          <JustificationEdit
+            justificationId={day.justification_id}
+            incident={incident}
+            rhType={day.rh_type}
+            reason={day.comment}
+            onDone={onDone}
+          />
         )}
         {canSwap && <RestSwapForm employeeId={employee.id} day={day} onDone={onDone} />}
         <ExceptionForm employeeId={employee.id} day={day.day} onDone={onDone} />

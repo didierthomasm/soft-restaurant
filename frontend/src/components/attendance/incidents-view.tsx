@@ -132,7 +132,14 @@ function IncidentTable({ days, byId, onSelect }: TableProps) {
 
 function IncidentRow({ day, byId, onSelect }: { day: DayOut } & Omit<TableProps, "days">) {
   const justifiable = incidentFor(day.outcome) !== null && day.justification_id === null;
-  const action = justifiable ? "Justificar" : day.outcome === "UNREGISTERED_CHANGE" ? "Resolver" : null;
+  const justified = incidentFor(day.outcome) !== null && day.justification_id !== null;
+  const action = justifiable
+    ? "Justificar"
+    : justified
+      ? "Editar"
+      : day.outcome === "UNREGISTERED_CHANGE"
+        ? "Resolver"
+        : null;
   const status =
     day.justification_id !== null || day.outcome === "JUSTIFIED"
       ? `Justificada${day.rh_type ? ` · ${RH_LABELS[day.rh_type]}` : ""}`

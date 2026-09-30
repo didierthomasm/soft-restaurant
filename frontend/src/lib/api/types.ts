@@ -18,6 +18,7 @@ export type ExceptionOut = Schemas["ExceptionOut"];
 export type ExceptionCreate = Schemas["ExceptionCreate"];
 export type RestSwapCreate = Schemas["RestSwapCreate"];
 export type JustificationCreate = Schemas["JustificationCreate"];
+export type JustificationUpdate = Schemas["JustificationUpdate"];
 export type SettingsBody = Schemas["SettingsBody"];
 export type Outcome = Schemas["Outcome"];
 export type RhType = Schemas["RhType"];
