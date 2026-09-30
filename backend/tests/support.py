@@ -1,14 +1,26 @@
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import date
+from pathlib import Path
 
+from dotenv import dotenv_values
 from sqlalchemy import Engine, text
 
+from tabernas.config import REPO_ROOT
 from tabernas.sr.source import SrCheckin, SrEmployee, SrServerInfo
 
-TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql+psycopg://tabernas:tabernas@localhost:5432/tabernas_test"
-)
+DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://tabernas:tabernas@localhost:5432/tabernas_test"
+
+
+def resolve_test_database_url(environ: Mapping[str, str], env_file: Path) -> str:
+    """Environment first (CI), then the repo's .env (local rotated password), then the default."""
+    if url := environ.get("TEST_DATABASE_URL"):
+        return url
+    from_file = dotenv_values(env_file).get("TEST_DATABASE_URL") if env_file.is_file() else None
+    return from_file or DEFAULT_TEST_DATABASE_URL
+
+
+TEST_DATABASE_URL = resolve_test_database_url(os.environ, REPO_ROOT / ".env")
 
 READ_ONLY_INFO = SrServerInfo(
     server="SRV",

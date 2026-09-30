@@ -25,3 +25,6 @@ docs/private/
 # Node / frontend (Plan B)
 node_modules/
 .next/
+
+# Local MCP client config (per machine)
+.mcp.json

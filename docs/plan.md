@@ -133,6 +133,9 @@ freetds.conf
 
 ### Etapa 1 — Base del sistema + Asistencia
 
+> Estado: **backend (1a–1e) terminado y aceptado el 2026-09-30** (Plan A); frontend
+> (1f) pendiente (Plan B).
+
 **Objetivo:** reemplazar el reporte semanal/mensual de asistencia de SR con uno que
 ya calcule retardos y faltas contra lo planeado, permita justificarlos y deje lista
 la lista para capturar en RH.

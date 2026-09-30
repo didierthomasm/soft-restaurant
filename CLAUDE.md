@@ -5,8 +5,24 @@ attendance incidents (retardos/faltas) and sales trends. Read before designing o
 coding a stage:
 - `docs/plan.md` — roadmap, stack, business rules, open decisions.
 - `docs/db-map.md` — SR schema, reconciled queries, gotchas.
+- `docs/specs/` and `docs/plans/` — design spec and implementation plan per stage.
 - `docs/private/` (gitignored, local only) — real employee mapping, rest-day rules,
-  reconciliation figures. Use it; never copy its contents into versioned files.
+  reconciliation figures, and `setup_employees.py` (configures the real employees
+  through the API). Use it; never copy its contents into versioned files.
+
+Status: Stage 1 backend (Plan A) is done and accepted; the Stage 1 frontend (Plan B,
+`docs/plans/2026-09-29-etapa-1-plan-b-frontend.md`) is next.
+
+## Backend layout (`backend/src/tabernas/`)
+
+- `domain/` — pure attendance logic (planned calendar, planned vs actual,
+  justifications, HR rows, summaries); frozen dataclasses, "today"/"now" as parameters.
+- `sr/` — `pymssql_source.py` is the only module that sends SQL to SR;
+  `fake_source.py` serves synthetic data when `SR_MODE=fake`.
+- `db/` + `alembic/` — our own tables; `repos/` return frozen domain objects, never ORM rows.
+- `services/attendance.py` — the only place that joins Postgres config, SR and the domain.
+- `api/` — thin routers, response envelope `{success, data, error, meta}`, error mapping.
+- `export/` — Excel workbook (Spanish labels).
 
 ## Hard rules
 
@@ -37,6 +53,9 @@ coding a stage:
   already done); the app refuses `SR_DB_USER=sa`.
 - Demo data (`seed_demo.py`) refuses to run on a database that already has real
   employees.
+- The local Postgres password is not the documented default: it lives in `.env`
+  (`POSTGRES_PASSWORD`, `DATABASE_URL`), and tests read `TEST_DATABASE_URL` from `.env`
+  when it is not exported (CI exports it).
 
 ## Conventions
 
@@ -52,11 +71,14 @@ coding a stage:
 
 - Start everything: `docker compose up --build` (API docs at http://127.0.0.1:8000/docs)
 - Backend tests (from `backend/`, needs `docker compose up -d db`): `uv run pytest`
+- Coverage gates as in CI (from `backend/`): `uv run pytest --cov && uv run coverage report --include="*/tabernas/domain/*" --fail-under=95`
 - Live SR tests (local only, never CI): `uv run pytest -m sr`
+- New migration (from `backend/`): `uv run alembic revision --autogenerate -m "..."`; the backend container runs `alembic upgrade head` on start
 - Lint and types (from `backend/`): `uv run ruff check . && uv run ruff format --check . && uv run pyright`
 - Check SR connectivity: `uv run --project backend scripts/check_connection.py`
 - Reconcile SR check-ins vs an SR export: `uv run --project backend scripts/reconcile_attendance.py --from YYYY-MM-DD --to YYYY-MM-DD --export db_examples/ASISTENCIA_EMPLEADOS.XLS`
 - Demo data (only with `SR_MODE=fake`): `docker compose run --rm -e SR_MODE=fake backend python /scripts/seed_demo.py`
+- Configure real employees and rest rules (private, idempotent): `python3 docs/private/setup_employees.py --dry-run`, then without `--dry-run`
 
 ## Important - debugging and fixing
 
