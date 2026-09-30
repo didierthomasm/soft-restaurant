@@ -52,6 +52,8 @@ SR no guarda horarios de empleados → viven de nuestro lado.
 
 Un mes completo de checadas (`entrada` en `[inicio, fin)`) coincide 1:1, por empleado,
 con el reporte exportado de SR. Cifras en `docs/private/reconciliation.md`.
+Verificado también vía API (etapa 1) el 2026-09-30: checadas 1:1 con el export y una
+semana de incidencias revisada con el gerente.
 
 ## Ventas
 
