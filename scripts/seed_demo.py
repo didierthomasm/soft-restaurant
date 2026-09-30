@@ -1,7 +1,7 @@
 """Load synthetic employees and rest rules for SR_MODE=fake (portfolio demo, E2E).
 
 Usage (repo root): uv run --project backend scripts/seed_demo.py
-Docker:            docker compose run --rm -e SR_MODE=fake backend python /scripts/seed_demo.py
+Docker (demo project): SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py
 """
 
 import sys
