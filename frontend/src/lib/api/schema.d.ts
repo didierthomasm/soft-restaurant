@@ -958,7 +958,7 @@ export interface components {
          * WarningCode
          * @enum {string}
          */
-        WarningCode: "NO_REST_RULE" | "UNMAPPED_CHECKIN" | "ORPHAN_JUSTIFICATION" | "MISSING_RH_NAME";
+        WarningCode: "NO_REST_RULE" | "UNMAPPED_CHECKIN" | "ORPHAN_JUSTIFICATION" | "MISSING_RH_NAME" | "NO_SR_ID";
         /** WarningOut */
         WarningOut: {
             code: components["schemas"]["WarningCode"];
@@ -1783,6 +1783,7 @@ export interface operations {
             query: {
                 from: string;
                 to: string;
+                group?: components["schemas"]["Grouping"];
             };
             header?: never;
             path?: never;

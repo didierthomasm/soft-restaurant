@@ -43,9 +43,7 @@ export const EXCEPTION_KIND_LABELS: Record<ExceptionKind, string> = {
   MANUAL_ABSENCE: "Falta registrada a mano",
 };
 
-// NO_SR_ID exists in the backend source but not yet in the committed schema.d.ts (the running
-// backend image predates it). Drop the extra union member after the next `npm run gen:api`.
-export const WARNING_LABELS: Record<WarningCode | "NO_SR_ID", string> = {
+export const WARNING_LABELS: Record<WarningCode, string> = {
   NO_REST_RULE: "Sin regla de descanso",
   UNMAPPED_CHECKIN: "Checada sin empleado",
   ORPHAN_JUSTIFICATION: "Justificación sin incidencia",
