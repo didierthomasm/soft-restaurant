@@ -21,9 +21,12 @@ export function hasSession(cookieValue: string | undefined): boolean {
   return cookieValue === SESSION_VALUE;
 }
 
+// Control chars (tab/CR/LF are stripped by the URL parser, turning "/\t/x" into "//x") and backslashes.
+const UNSAFE_CHARS = /[\u0000-\u001f\u007f\\]/;
+
 /** Only same-site paths: blocks open redirects such as //evil.com or https://…. */
 export function safeNext(value: string | undefined): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || UNSAFE_CHARS.test(value)) {
     return DEFAULT_AFTER_LOGIN;
   }
   return value;

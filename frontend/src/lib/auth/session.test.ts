@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SESSION_VALUE, credentialsMatch, hasSession, safeNext } from "./session";
+import {
+  SESSION_VALUE,
+  credentialsMatch,
+  hasSession,
+  safeNext,
+} from "./session";
 
 const env = { FAKE_AUTH_USER: "demo", FAKE_AUTH_PASSWORD: "secreto" };
 
@@ -13,7 +18,9 @@ describe("credentialsMatch", () => {
 
   it("rejects everything when credentials are not configured", () => {
     expect(credentialsMatch("", "", {})).toBe(false);
-    expect(credentialsMatch("demo", "secreto", { FAKE_AUTH_USER: "demo" })).toBe(false);
+    expect(
+      credentialsMatch("demo", "secreto", { FAKE_AUTH_USER: "demo" }),
+    ).toBe(false);
   });
 });
 
@@ -27,13 +34,22 @@ describe("hasSession", () => {
 
 describe("safeNext", () => {
   it("keeps internal paths with their query", () => {
-    expect(safeNext("/semana?desde=2026-09-21")).toBe("/semana?desde=2026-09-21");
+    expect(safeNext("/semana?desde=2026-09-21")).toBe(
+      "/semana?desde=2026-09-21",
+    );
   });
 
-  it.each([undefined, "", "https://evil.com", "//evil.com", "/\\evil.com", "semana"])(
-    "falls back to /semana for %s",
-    (value) => {
-      expect(safeNext(value)).toBe("/semana");
-    },
-  );
+  it.each([
+    undefined,
+    "",
+    "https://evil.com",
+    "//evil.com",
+    "/\\evil.com",
+    "/\t/evil.com",
+    "/\n/evil.com",
+    "/\r/evil.com",
+    "semana",
+  ])("falls back to /semana for %s", (value) => {
+    expect(safeNext(value)).toBe("/semana");
+  });
 });
