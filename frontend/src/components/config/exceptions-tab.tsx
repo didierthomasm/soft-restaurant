@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { FormError, Loading, QueryError } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +14,13 @@ import { useDeleteException, useEmployees, useExceptions } from "@/lib/api/confi
 import { addDays, formatDate, todayIso } from "@/lib/dates";
 import { EXCEPTION_KIND_LABELS, RH_LABELS } from "@/lib/labels";
 
-const WINDOW_DAYS = 45;
+const PAST_DAYS = 45;
+const FUTURE_DAYS = 365;
 
 export function ExceptionsTab() {
   const [today] = useState(todayIso);
-  const from = addDays(today, -WINDOW_DAYS);
-  const to = addDays(today, WINDOW_DAYS);
+  const from = addDays(today, -PAST_DAYS);
+  const to = addDays(today, FUTURE_DAYS);
   const exceptions = useExceptions(from, to);
   const employees = useEmployees();
   const remove = useDeleteException();
@@ -62,15 +64,13 @@ export function ExceptionsTab() {
                 <TableCell>{exception.rh_type ? RH_LABELS[exception.rh_type] : ""}</TableCell>
                 <TableCell>{exception.comment}</TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
+                  <ConfirmDeleteButton
+                    label={`Eliminar ${EXCEPTION_KIND_LABELS[exception.kind]} del ${formatDate(exception.date_from)}`}
+                    pending={remove.isPending}
+                    onConfirm={() =>
                       remove.mutate(exception.id, { onSuccess: () => toast.success("Excepción eliminada") })
                     }
-                  >
-                    Eliminar
-                  </Button>
+                  />
                 </TableCell>
               </TableRow>
             ))}

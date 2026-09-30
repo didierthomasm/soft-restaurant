@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { toast } from "sonner";
 
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { FormError, Loading, QueryError } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,13 +51,11 @@ export function RestRulesTab() {
                   {formatDate(rule.valid_from)} – {rule.valid_to ? formatDate(rule.valid_to) : "vigente"}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => remove.mutate(rule.id, { onSuccess: () => toast.success("Regla eliminada") })}
-                  >
-                    Eliminar
-                  </Button>
+                  <ConfirmDeleteButton
+                    label={`Eliminar regla de ${names.get(rule.employee_id) ?? rule.employee_id}`}
+                    pending={remove.isPending}
+                    onConfirm={() => remove.mutate(rule.id, { onSuccess: () => toast.success("Regla eliminada") })}
+                  />
                 </TableCell>
               </TableRow>
             ))}
