@@ -11,7 +11,8 @@ coding a stage:
   through the API). Use it; never copy its contents into versioned files.
 
 Status: Stage 1 backend (Plan A) is done and accepted; the Stage 1 frontend (Plan B,
-`docs/plans/2026-09-29-etapa-1-plan-b-frontend.md`) is next.
+`docs/plans/2026-09-29-etapa-1-plan-b-frontend.md`) is implemented (UI, unit tests, E2E,
+CI); acceptance with the manager is pending.
 
 ## Backend layout (`backend/src/tabernas/`)
 
@@ -56,6 +57,7 @@ Status: Stage 1 backend (Plan A) is done and accepted; the Stage 1 frontend (Pla
 - The local Postgres password is not the documented default: it lives in `.env`
   (`POSTGRES_PASSWORD`, `DATABASE_URL`), and tests read `TEST_DATABASE_URL` from `.env`
   when it is not exported (CI exports it).
+- The default compose project's Postgres holds the real configuration: never `docker compose down -v` it or start it with `SR_MODE=fake`. Demo/E2E runs use `-p tabernas-demo`.
 
 ## Conventions
 
@@ -79,6 +81,11 @@ Status: Stage 1 backend (Plan A) is done and accepted; the Stage 1 frontend (Pla
 - Reconcile SR check-ins vs an SR export: `uv run --project backend scripts/reconcile_attendance.py --from YYYY-MM-DD --to YYYY-MM-DD --export db_examples/ASISTENCIA_EMPLEADOS.XLS`
 - Demo data (only with `SR_MODE=fake`): `docker compose run --rm -e SR_MODE=fake backend python /scripts/seed_demo.py`
 - Configure real employees and rest rules (private, idempotent): `python3 docs/private/setup_employees.py --dry-run`, then without `--dry-run`
+- Frontend dev (from `frontend/`, backend at :8000): `BACKEND_URL=http://127.0.0.1:8000 FAKE_AUTH_USER=demo FAKE_AUTH_PASSWORD=demo npm run dev`
+- Frontend checks (from `frontend/`): `npm run lint && npm run typecheck && npm test`
+- Regenerate API types after backend changes (backend running): `npm run gen:api`
+- E2E (demo stack up and seeded): `npm run e2e`
+- Full demo without SR, isolated from the real data (separate compose project and volume; stop the real stack first with `docker compose stop`): `SR_MODE=fake docker compose -p tabernas-demo up -d --build --wait && SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py` → http://127.0.0.1:3000 (demo/demo); clean up with `docker compose -p tabernas-demo down -v`
 
 ## Important - debugging and fixing
 
