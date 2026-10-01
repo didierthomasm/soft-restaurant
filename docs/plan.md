@@ -201,6 +201,8 @@ la lista para capturar en RH.
 
 ### Etapa 2 — Agente de revisión semanal
 
+> Estado: **diseño en revisión** — [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md).
+
 **Objetivo:** cada jueves (día de envío a RH), un agente prepara el borrador del
 reporte de incidencias.
 
