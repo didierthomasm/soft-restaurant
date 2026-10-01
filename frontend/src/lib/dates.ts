@@ -70,3 +70,25 @@ export function formatDate(value: string): string {
 export function formatTime(datetime: string | null | undefined): string {
   return datetime ? datetime.slice(11, 16) : "";
 }
+
+/** Year the ISO week belongs to (the year of its Thursday): 2027-01-01 is 2026-W53. */
+export function isoWeekYear(value: string): number {
+  const date = parseIsoDate(value);
+  const thursday = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() + 3 - ((date.getDay() + 6) % 7),
+  );
+  return thursday.getFullYear();
+}
+
+/** Monday of ISO week `week` of `year` (week 1 contains January 4th). */
+export function isoWeekMonday(year: number, week: number): string {
+  const january4 = toIsoDate(new Date(year, 0, 4));
+  return addDays(weekStart(january4), (week - 1) * 7);
+}
+
+/** "YYYY-MM-DDTHH:MM…" (naive business time from the backend) → "DD/MM/YYYY HH:MM". */
+export function formatDateTime(datetime: string | null | undefined): string {
+  return datetime ? `${formatDate(datetime.slice(0, 10))} ${formatTime(datetime)}` : "";
+}

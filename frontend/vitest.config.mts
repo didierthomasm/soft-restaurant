@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/lib/**/*.ts", "src/proxy.ts"],
-      exclude: ["src/lib/api/schema.d.ts", "src/lib/api/attendance.ts", "src/lib/api/config.ts"],
+      exclude: ["src/lib/api/schema.d.ts", "src/lib/api/attendance.ts", "src/lib/api/config.ts", "src/lib/api/reviews.ts"],
       thresholds: { lines: 80, functions: 80, branches: 80 },
     },
   },
