@@ -11,6 +11,7 @@ from tabernas.domain.periods import (
     iso_week_range,
     month_key,
     month_range,
+    validate_iso_week,
     validate_range,
     week_monday,
 )
@@ -69,3 +70,11 @@ def test_validate_range_rejects_94_days_and_reversed() -> None:
 )
 def test_double_rest_week_alternates_from_anchor(day: date, expected: bool) -> None:
     assert is_double_rest_week(date(2026, 9, 28), day) is expected
+
+
+def test_validate_iso_week_accepts_week_53_only_in_long_years() -> None:
+    validate_iso_week(2026, 53)  # 2026 starts on a Thursday: 53 ISO weeks
+    with pytest.raises(RangeError, match="Semana ISO inválida"):
+        validate_iso_week(2025, 53)
+    with pytest.raises(RangeError, match="Semana ISO inválida"):
+        validate_iso_week(2026, 0)

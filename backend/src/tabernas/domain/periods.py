@@ -32,6 +32,13 @@ def iso_week_range(year: int, week: int) -> tuple[date, date]:
     return monday, monday + timedelta(days=6)
 
 
+def validate_iso_week(year: int, week: int) -> None:
+    try:
+        date.fromisocalendar(year, week, 1)
+    except ValueError as exc:
+        raise RangeError(f"Semana ISO inválida: {year}-W{week:02d}") from exc
+
+
 def month_range(year: int, month: int) -> tuple[date, date]:
     last_day = calendar.monthrange(year, month)[1]
     return date(year, month, 1), date(year, month, last_day)

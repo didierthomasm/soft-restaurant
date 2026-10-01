@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://tabernas:tabernas@localhost:5432/tabernas"
     app_timezone: str = "America/Mexico_City"
 
+    # Weekly review agent (stage 2). fake = deterministic text, no API calls (demo, CI).
+    review_agent: Literal["live", "fake"] = "fake"
+    anthropic_api_key: SecretStr = SecretStr("")
+    review_model: str = "claude-opus-5-5"
+
     @model_validator(mode="after")
     def _require_live_credentials(self) -> Self:
         if self.sr_mode != "live":

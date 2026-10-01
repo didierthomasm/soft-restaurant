@@ -12,13 +12,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from tabernas.api.envelope import Envelope, ErrorBody
 from tabernas.domain.validation import DomainValidationError
 from tabernas.repos.errors import ConflictError, NotFoundError
-from tabernas.sr.source import SrNotReadOnlyError, SrUnavailableError
+from tabernas.sr.source import SR_UNAVAILABLE_MESSAGE, SrNotReadOnlyError, SrUnavailableError
 
 logger = logging.getLogger(__name__)
 
 Handler = Callable[[Request, Exception], Awaitable[JSONResponse]]
 
-SR_UNAVAILABLE_MESSAGE = "No se pudo leer SoftRestaurant. Revisa Tailscale."
 _HTTP_CODES = {404: "NOT_FOUND", 405: "METHOD_NOT_ALLOWED"}
 # (exception, status, code, fixed message or None to use str(exc))
 _MAPPED: tuple[tuple[type[Exception], int, str, str | None], ...] = (

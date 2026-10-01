@@ -32,8 +32,8 @@ def session_factory(engine: Engine) -> Iterator[sessionmaker[Session]]:
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE employee, rest_rule, schedule_exception, justification, setting "
-                "RESTART IDENTITY CASCADE"
+                "TRUNCATE employee, rest_rule, schedule_exception, justification, setting, "
+                "weekly_review RESTART IDENTITY CASCADE"
             )
         )
 

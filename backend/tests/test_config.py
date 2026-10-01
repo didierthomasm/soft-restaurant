@@ -6,7 +6,16 @@ from tabernas.config import Settings
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("SR_MODE", "SR_DB_HOST", "SR_DB_PASSWORD", "DATABASE_URL", "APP_TIMEZONE"):
+    for name in (
+        "SR_MODE",
+        "SR_DB_HOST",
+        "SR_DB_PASSWORD",
+        "DATABASE_URL",
+        "APP_TIMEZONE",
+        "REVIEW_AGENT",
+        "ANTHROPIC_API_KEY",
+        "REVIEW_MODEL",
+    ):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -52,3 +61,20 @@ def test_live_mode_accepts_complete_config() -> None:
     )
     assert settings.sr_db_password.get_secret_value() == "secret"
     assert "secret" not in repr(settings)
+
+
+def test_review_agent_defaults_to_fake_without_key() -> None:
+    settings = Settings(_env_file=None)  # type: ignore[call-arg]
+    assert settings.review_agent == "fake"
+    assert settings.review_model == "claude-opus-5-5"
+    assert settings.anthropic_api_key.get_secret_value() == ""
+
+
+def test_anthropic_key_is_secret() -> None:
+    settings = Settings(
+        _env_file=None,  # type: ignore[call-arg]
+        review_agent="live",
+        anthropic_api_key="sk-test-123",  # type: ignore[arg-type]
+    )
+    assert settings.anthropic_api_key.get_secret_value() == "sk-test-123"
+    assert "sk-test-123" not in repr(settings)

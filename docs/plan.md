@@ -58,7 +58,7 @@ nunca la operación del punto de venta.
 | Frontend | **Next.js** (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query | Stack moderno y demostrable |
 | Contrato API | Tipos TS generados del OpenAPI (`openapi-typescript`) | Front y back nunca se desalinean |
 | Gráficas | Recharts (etapa 3) | Integración directa con React |
-| Agentes | Claude vía Anthropic API / Claude Agent SDK (Python) | Modelo y SDK exactos se fijan en el diseño de la etapa 2 |
+| Agentes | Claude vía Messages API (SDK `anthropic`), `claude-opus-5-5`, loop propio con herramientas | Decidido en el diseño de la etapa 2 |
 | Automatización web | Playwright (Python) (etapa 5) | Robusto para leer/capturar en RH |
 | Pronóstico | pandas + statsmodels (etapa 4) | Modelos estadísticos simples y explicables |
 | Calidad | pytest + pytest-cov, ruff, pyright · Vitest, ESLint · Playwright E2E | TDD con 80%+ de cobertura |
@@ -200,6 +200,11 @@ la lista para capturar en RH.
 - Cobertura ≥ 80% en `domain/`.
 
 ### Etapa 2 — Agente de revisión semanal
+
+> Estado: **en implementación** (Plan A, backend, terminado en la rama `feat/etapa-2-backend`) — diseño en
+> [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md);
+> Plan A (backend) en [`plans/2026-10-01-etapa-2-plan-a-backend.md`](plans/2026-10-01-etapa-2-plan-a-backend.md)
+> y Plan B (frontend) en [`plans/2026-10-01-etapa-2-plan-b-frontend.md`](plans/2026-10-01-etapa-2-plan-b-frontend.md).
 
 **Objetivo:** cada jueves (día de envío a RH), un agente prepara el borrador del
 reporte de incidencias.

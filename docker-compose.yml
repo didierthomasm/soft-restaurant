@@ -40,6 +40,26 @@ services:
       timeout: 5s
       retries: 12
 
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "tabernas.worker"]
+    env_file:
+      - path: .env
+        required: false  # CI and the public demo run without a .env
+    environment:
+      SR_MODE: ${SR_MODE:-fake}
+      REVIEW_AGENT: ${REVIEW_AGENT:-fake}  # the real machine's .env sets REVIEW_AGENT=live
+      DATABASE_URL: postgresql+psycopg://tabernas:${POSTGRES_PASSWORD:-tabernas}@db:5432/tabernas
+      FREETDSCONF: /etc/freetds/freetds.conf
+    volumes:
+      - ./freetds.conf:/etc/freetds/freetds.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy  # the backend applies the migrations on start
+    restart: unless-stopped
+
   frontend:
     build:
       context: .
