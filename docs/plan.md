@@ -201,10 +201,20 @@ la lista para capturar en RH.
 
 ### Etapa 2 — Agente de revisión semanal
 
-> Estado: **en implementación** (Plan A, backend, terminado en la rama `feat/etapa-2-backend`; Plan B, frontend, implementado en la rama `feat/etapa-2-frontend`, PR pendiente) — diseño en
+> Estado: **cerrada el 2026-10-01.** Backend (Plan A, PR #6) y frontend (Plan B, PR #7)
+> integrados con CI en verde — diseño en
 > [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md);
 > Plan A (backend) en [`plans/2026-10-01-etapa-2-plan-a-backend.md`](plans/2026-10-01-etapa-2-plan-a-backend.md)
 > y Plan B (frontend) en [`plans/2026-10-01-etapa-2-plan-b-frontend.md`](plans/2026-10-01-etapa-2-plan-b-frontend.md).
+>
+> Pendientes conocidos (no bloquean; se retoman cuando haga falta):
+> - El historial de borradores de `/revision` muestra la hora de los datos (`as_of`), no la
+>   de creación; un borrador `FAILED` o `QUEUED` no muestra hora. Mostrar `created_at`
+>   requiere formatear con zona horaria (llega en UTC).
+> - Plural en las cifras de los hallazgos ("1 veces").
+> - El arranque del stack con un volumen de Postgres nuevo falló una vez (backend exit 1,
+>   éxito al reintentar); probable carrera del init de Postgres con `pg_isready` sin `-h`.
+>   Endurecer el healthcheck o agregar `restart: on-failure` si se repite.
 
 **Objetivo:** cada jueves (día de envío a RH), un agente prepara el borrador del
 reporte de incidencias.
