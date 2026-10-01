@@ -26,8 +26,11 @@ packages = ["src/tabernas"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-m 'not sr' --strict-markers"
-markers = ["sr: needs the live SoftRestaurant server (local only, never in CI)"]
+addopts = "-m 'not sr and not agent' --strict-markers"
+markers = [
+    "sr: needs the live SoftRestaurant server (local only, never in CI)",
+    "agent: calls the real Claude API (costs money; local only, never in CI)",
+]
 filterwarnings = [
     "ignore:Using `httpx` with `starlette.testclient` is deprecated.*:starlette.exceptions.StarletteDeprecationWarning",
 ]
