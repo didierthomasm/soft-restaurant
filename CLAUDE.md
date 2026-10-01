@@ -11,8 +11,10 @@ coding a stage:
   through the API). Use it; never copy its contents into versioned files.
 
 Status: **Stage 1 (attendance) is closed** (2026-09-30): backend (Plan A) and frontend
-(Plan B, PR #3) merged with CI green. Next is Stage 2 (weekly review agent), which needs
-its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are listed in
+(Plan B, PR #3) merged with CI green. Stage 2 (weekly review agent) is in progress: spec
+in `docs/specs/2026-10-01-etapa-2-revision-semanal-design.md`, Plan A (backend) in
+`docs/plans/2026-10-01-etapa-2-plan-a-backend.md`, Plan B (frontend) in
+`docs/plans/2026-10-01-etapa-2-plan-b-frontend.md`. Known Stage 1 follow-ups are listed in
 `docs/plan.md` §5.
 
 ## Backend layout (`backend/src/tabernas/`)
@@ -25,6 +27,15 @@ its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are l
 - `services/attendance.py` — the only place that joins Postgres config, SR and the domain.
 - `api/` — thin routers, response envelope `{success, data, error, meta}`, error mapping.
 - `export/` — Excel workbook (Spanish labels).
+- `domain/review*.py` — weekly-review findings (`review.py`), types and the Thu 17:30 /
+  Mon 09:00 schedule slots; pure, like the rest of `domain/`.
+- `agents/` — Claude agents. `pseudonyms.py`: Claude only ever sees `E{id}`.
+  `weekly_review/`: append-only tool loop (`runner.py`) behind the `MessagesApi`
+  protocol, read-only tools over a precomputed `ReviewContext`, and a validator that
+  enforces exact coverage of the findings. `anthropic_api.py` is the only SDK adapter.
+- `services/review.py` — builds the review context, runs the agent, stores the snapshot.
+- `worker.py` — the only process that runs reviews (compose service `worker`,
+  `python -m tabernas.worker`); the API only enqueues.
 
 ## Frontend layout (`frontend/src/`)
 
@@ -47,6 +58,9 @@ its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are l
 - **This repo is a public portfolio.** Never commit real employee names, IPs,
   hostnames, sales figures, or files from `db_examples/`. Tests and demo data are
   synthetic. Secrets and connection details live in `.env` (see `.env.example`).
+- **Nothing sent to the Anthropic API may identify an employee.** Agent tools return
+  `E{id}`; free text goes through `scrub()` (accent-, spacing- and hyphen-tolerant;
+  also replaces individual name tokens); the validator rejects full names in Claude's output.
 - Any new SR-derived figure must be reconciled against an SR export before it is
   trusted (method in `docs/db-map.md`).
 
@@ -81,6 +95,10 @@ its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are l
 - `/auth/login` takes JSON `{user, password}`, not form data. Frontend dev reads
   `frontend/.env.local` (copy `frontend/.env.example`); if the Docker frontend holds port
   3000, run `npm run dev -- --port 3001`.
+- `REVIEW_AGENT` defaults to `fake` (no API calls). With `live` and no
+  `ANTHROPIC_API_KEY`, drafts are saved without narrative. On the real stack the worker
+  enqueues the last due slot (Thu 17:30 / Mon 09:00) if it is less than 24 h old, so the
+  first `docker compose up` after a slot can call Claude right away.
 
 ## Conventions
 
@@ -107,7 +125,9 @@ its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are l
 - Frontend checks (from `frontend/`): `npm run lint && npm run typecheck && npm test`
 - Regenerate API types after backend changes (backend running): `npm run gen:api`
 - E2E (demo stack up and seeded): `npm run e2e`
-- Full demo without SR, isolated from the real data (separate compose project and volume; stop the real stack first with `docker compose stop`): `SR_MODE=fake docker compose -p tabernas-demo up -d --build --wait && SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py` → http://127.0.0.1:3000 (demo/demo); clean up with `docker compose -p tabernas-demo down -v`
+- Worker logs: `docker compose logs -f worker`
+- Live agent evaluation (costs money; local only, never CI; from `backend/`): `uv run pytest -m agent -s`
+- Full demo without SR, isolated from the real data (separate compose project and volume; stop the real stack first with `docker compose stop`): `SR_MODE=fake REVIEW_AGENT=fake docker compose -p tabernas-demo up -d --build --wait && SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py` → http://127.0.0.1:3000 (demo/demo); clean up with `docker compose -p tabernas-demo down -v`
 
 ## Important - debugging and fixing
 
