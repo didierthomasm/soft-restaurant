@@ -29,6 +29,9 @@ def test_migrations_match_models_and_seed_settings(engine: Engine) -> None:
             "entry_time_kitchen": "16:30",
             "entry_time_other": "16:40",
             "tolerance_minutes": "10",
+            "review_streak_days": "2",
+            "review_late_week": "2",
+            "review_late_weeks": "3",
         }
     finally:
         reset_schema(engine)

@@ -1,20 +1,26 @@
-"""SQLAlchemy tables for our own configuration. Derived attendance is never stored."""
+"""SQLAlchemy tables for our own configuration. Derived attendance is never
+stored; weekly review drafts are the one dated snapshot (stage 2, spec E7)."""
 
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     MetaData,
     SmallInteger,
     String,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from tabernas.domain.review_types import ReviewStatus, ReviewTrigger
 from tabernas.domain.types import Area, ExceptionKind, Incident, RhType
 
 NAMING_CONVENTION = {
@@ -116,3 +122,32 @@ class SettingRow(TimestampMixin, Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(String(64))
+
+
+class WeeklyReviewRow(TimestampMixin, Base):
+    __tablename__ = "weekly_review"
+    __table_args__ = (
+        CheckConstraint("iso_week BETWEEN 1 AND 53", name="iso_week_range"),
+        Index(
+            "uq_weekly_review_in_progress",
+            "iso_year",
+            "iso_week",
+            unique=True,
+            postgresql_where=text("status IN ('QUEUED', 'RUNNING')"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    iso_year: Mapped[int]
+    iso_week: Mapped[int] = mapped_column(SmallInteger)
+    trigger: Mapped[ReviewTrigger] = mapped_column(_enum(ReviewTrigger))
+    status: Mapped[ReviewStatus] = mapped_column(_enum(ReviewStatus))
+    as_of: Mapped[datetime | None] = mapped_column(DateTime())  # naive business time
+    findings: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    rh_rows: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    narrative: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    model: Mapped[str | None] = mapped_column(String(64))
+    input_tokens: Mapped[int | None]
+    output_tokens: Mapped[int | None]
+    error: Mapped[str | None] = mapped_column(String(1000))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime())  # naive business time
