@@ -5,9 +5,12 @@ import {
   daysBetween,
   formatDate,
   formatDay,
+  formatDateTime,
   formatTime,
   isIsoDate,
+  isoWeekMonday,
   isoWeekNumber,
+  isoWeekYear,
   monthRange,
   todayIso,
   weekStart,
@@ -58,5 +61,23 @@ describe("dates", () => {
     expect(formatDate("2026-09-23")).toBe("23/09/2026");
     expect(formatTime("2026-09-23T16:51:07")).toBe("16:51");
     expect(formatTime(null)).toBe("");
+  });
+
+  it("finds the ISO week-numbering year", () => {
+    expect(isoWeekYear("2026-09-21")).toBe(2026);
+    expect(isoWeekYear("2026-12-28")).toBe(2026); // W53
+    expect(isoWeekYear("2027-01-01")).toBe(2026); // still 2026-W53
+    expect(isoWeekYear("2027-01-04")).toBe(2027);
+  });
+
+  it("finds the Monday of an ISO week", () => {
+    expect(isoWeekMonday(2026, 39)).toBe("2026-09-21");
+    expect(isoWeekMonday(2026, 53)).toBe("2026-12-28");
+    expect(isoWeekMonday(2027, 1)).toBe("2027-01-04");
+  });
+
+  it("formats naive backend datetimes", () => {
+    expect(formatDateTime("2026-09-24T17:30:00")).toBe("24/09/2026 17:30");
+    expect(formatDateTime(null)).toBe("");
   });
 });

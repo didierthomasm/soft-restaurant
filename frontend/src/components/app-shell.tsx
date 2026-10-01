@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/semana", label: "Semana" },
   { href: "/incidencias", label: "Incidencias" },
+  { href: "/revision", label: "Revisión" },
   { href: "/mes", label: "Mes" },
   { href: "/configuracion", label: "Configuración" },
 ] as const;

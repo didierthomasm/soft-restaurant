@@ -126,6 +126,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Review Settings */
+        get: operations["read_review_settings_settings_review_get"];
+        /** Write Review Settings */
+        put: operations["write_review_settings_settings_review_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rest-rules": {
         parameters: {
             query?: never;
@@ -313,6 +331,58 @@ export interface paths {
         get: operations["export_xlsx_attendance_export_xlsx_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reviews */
+        get: operations["list_reviews_reviews_get"];
+        put?: never;
+        /** Create Review */
+        post: operations["create_review_reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reviews/{review_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Review */
+        get: operations["get_review_reviews__review_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reviews/{review_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Review */
+        post: operations["approve_review_reviews__review_id__approve_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -520,6 +590,39 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** Envelope[ReviewDetailOut] */
+        Envelope_ReviewDetailOut_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["ReviewDetailOut"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[ReviewSettingsBody] */
+        Envelope_ReviewSettingsBody_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["ReviewSettingsBody"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[ReviewSummaryOut] */
+        Envelope_ReviewSummaryOut_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["ReviewSummaryOut"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** Envelope[SettingsBody] */
         Envelope_SettingsBody_: {
             /** Success */
@@ -584,6 +687,18 @@ export interface components {
             success: boolean;
             /** Data */
             data?: components["schemas"]["RestRuleOut"][] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[ReviewSummaryOut]] */
+        Envelope_list_ReviewSummaryOut__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["ReviewSummaryOut"][] | null;
             error?: components["schemas"]["ErrorBody"] | null;
             /** Meta */
             meta?: {
@@ -680,6 +795,28 @@ export interface components {
             comment?: string | null;
         };
         /**
+         * FindingKind
+         * @description Declaration order is the order findings are listed in (spec §4).
+         * @enum {string}
+         */
+        FindingKind: "REST_DAY_CHECKIN" | "ABSENT_NO_EXCEPTION" | "NO_CHECKIN_STREAK" | "REPEATED_LATE" | "CONFIG_WARNING";
+        /** FindingOut */
+        FindingOut: {
+            /** Id */
+            id: string;
+            kind: components["schemas"]["FindingKind"];
+            /** Employee Id */
+            employee_id: number | null;
+            /** Employee Name */
+            employee_name: string | null;
+            /** Days */
+            days: string[];
+            /** Facts */
+            facts: {
+                [key: string]: number | string;
+            };
+        };
+        /**
          * Grouping
          * @enum {string}
          */
@@ -761,6 +898,22 @@ export interface components {
             reason?: string | null;
             rh_type?: components["schemas"]["RhType"] | null;
         };
+        /** NarrativeItemOut */
+        NarrativeItemOut: {
+            /** Finding Id */
+            finding_id: string;
+            priority: components["schemas"]["Priority"];
+            /** Explanation */
+            explanation: string;
+            suggested_action: components["schemas"]["SuggestedAction"];
+        };
+        /** NarrativeOut */
+        NarrativeOut: {
+            /** Summary */
+            summary: string;
+            /** Items */
+            items: components["schemas"]["NarrativeItemOut"][];
+        };
         /**
          * Outcome
          * @enum {string}
@@ -771,6 +924,26 @@ export interface components {
          * @enum {string}
          */
         Planned: "WORK" | "REST" | "CLOSED" | "ABSENCE";
+        /**
+         * Priority
+         * @enum {string}
+         */
+        Priority: "HIGH" | "MEDIUM" | "LOW";
+        /** ProposedRowOut */
+        ProposedRowOut: {
+            /** Employee Id */
+            employee_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            rh_type: components["schemas"]["RhType"];
+            /** Comment */
+            comment: string;
+        };
         /** RestRuleCreate */
         RestRuleCreate: {
             /** Employee Id */
@@ -848,6 +1021,89 @@ export interface components {
              */
             comment: string;
         };
+        /** ReviewCreate */
+        ReviewCreate: {
+            /** Year */
+            year: number;
+            /** Week */
+            week: number;
+        };
+        /** ReviewDetailOut */
+        ReviewDetailOut: {
+            /** Id */
+            id: number;
+            /** Year */
+            year: number;
+            /** Week */
+            week: number;
+            trigger: components["schemas"]["ReviewTrigger"];
+            status: components["schemas"]["ReviewStatus"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** As Of */
+            as_of: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Error */
+            error: string | null;
+            /** Findings */
+            findings: components["schemas"]["FindingOut"][];
+            narrative: components["schemas"]["NarrativeOut"] | null;
+            /** Rh Rows */
+            rh_rows: components["schemas"]["ProposedRowOut"][];
+            /** Model */
+            model: string | null;
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Stale */
+            stale: boolean | null;
+        };
+        /** ReviewSettingsBody */
+        ReviewSettingsBody: {
+            /** Streak Days */
+            streak_days: number;
+            /** Late Week */
+            late_week: number;
+            /** Late Weeks */
+            late_weeks: number;
+        };
+        /**
+         * ReviewStatus
+         * @enum {string}
+         */
+        ReviewStatus: "QUEUED" | "RUNNING" | "READY" | "READY_NO_NARRATIVE" | "FAILED" | "APPROVED";
+        /** ReviewSummaryOut */
+        ReviewSummaryOut: {
+            /** Id */
+            id: number;
+            /** Year */
+            year: number;
+            /** Week */
+            week: number;
+            trigger: components["schemas"]["ReviewTrigger"];
+            status: components["schemas"]["ReviewStatus"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** As Of */
+            as_of: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Error */
+            error: string | null;
+        };
+        /**
+         * ReviewTrigger
+         * @enum {string}
+         */
+        ReviewTrigger: "THURSDAY" | "MONDAY" | "MANUAL";
         /** RhRowOut */
         RhRowOut: {
             /** Employee Id */
@@ -918,6 +1174,11 @@ export interface components {
             /** Is Sysadmin */
             is_sysadmin: boolean;
         };
+        /**
+         * SuggestedAction
+         * @enum {string}
+         */
+        SuggestedAction: "JUSTIFY" | "REST_SWAP" | "ADD_EXCEPTION" | "FIX_CONFIG" | "NONE";
         /** SummaryOut */
         SummaryOut: {
             /** Employee Id */
@@ -1241,6 +1502,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_SettingsBody_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_review_settings_settings_review_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReviewSettingsBody_"];
+                };
+            };
+        };
+    };
+    write_review_settings_settings_review_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewSettingsBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReviewSettingsBody_"];
                 };
             };
             /** @description Validation Error */
@@ -1798,6 +2112,133 @@ export interface operations {
                 };
                 content: {
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reviews_reviews_get: {
+        parameters: {
+            query?: {
+                year?: number | null;
+                week?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_ReviewSummaryOut__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_review_reviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReviewSummaryOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_review_reviews__review_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReviewDetailOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_review_reviews__review_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ReviewSummaryOut_"];
                 };
             };
             /** @description Validation Error */
