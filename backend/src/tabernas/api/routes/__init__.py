@@ -7,6 +7,7 @@ from tabernas.api.routes import (
     health,
     justifications,
     rest_rules,
+    reviews,
     settings,
 )
 
@@ -18,4 +19,5 @@ ROUTERS: list[APIRouter] = [
     exceptions.router,
     justifications.router,
     attendance.router,
+    reviews.router,
 ]
