@@ -1,7 +1,7 @@
 # Etapa 1 — Base del sistema + Asistencia: diseño
 
-> Estado: **diseño aprobado en conversación (2026-09-29)**, pendiente de revisión del
-> documento. Deriva de [`plan.md`](../plan.md) §5 Etapa 1 y de
+> Estado: **implementado y cerrado (2026-09-30)**: Plan A (backend) y Plan B
+> (frontend) terminados; pendientes conocidos en [`plan.md`](../plan.md) §5. Deriva de [`plan.md`](../plan.md) §5 Etapa 1 y de
 > [`db-map.md`](../db-map.md). Reglas de negocio y decisiones resueltas de `plan.md`
 > §4 y §6 aplican tal cual; aquí solo se detalla cómo se implementan.
 
