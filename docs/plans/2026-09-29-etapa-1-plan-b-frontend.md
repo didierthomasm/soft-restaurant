@@ -15,8 +15,10 @@ en `ApiError`. La lógica pura (fechas, etiquetas, TSV, auth) vive en `src/lib/`
 tests de Vitest; los componentes son presentacionales y las páginas los orquestan.
 
 **Tech Stack:** Next.js 16.3, React 19.3, TypeScript, Tailwind CSS 4.3, shadcn/ui
-(CLI 4.21), TanStack Query 5, openapi-fetch 0.17 + openapi-typescript 7.13, Vitest 5 +
-Testing Library, Playwright 1.63, Node 24.
+(CLI 4.21, preset **`radix-nova`** — el default de la CLI ahora es Base UI y el código de
+este plan usa la API de Radix: `asChild`, `onCheckedChange`), TanStack Query 5,
+openapi-fetch 0.17 + openapi-typescript 7.13, Vitest 5 (Vite 8) + Testing Library,
+Playwright 1.63, Node 24 (**≥ 24.15**: lo exige jsdom 30).
 
 **Spec:** [`docs/specs/2026-09-29-etapa-1-asistencia-design.md`](../specs/2026-09-29-etapa-1-asistencia-design.md)
 §9 (frontend) y D4/D5. **Prerrequisito:** Plan A terminado
@@ -37,6 +39,19 @@ contratos HTTP de este plan son los de sus Tasks 13–17.
   se escriben a mano tipos que dupliquen el backend.
 - Puerto publicado solo en `127.0.0.1:3000`.
 - Todos los comandos de frontend se corren **desde `frontend/`** salvo que se indique.
+- **El Postgres local (proyecto compose por defecto) tiene la configuración real**
+  (empleados y reglas de Plan A, Task 20). Nunca `docker compose down -v` sobre él ni
+  lo levantes con `SR_MODE=fake`. Toda verificación con datos demo usa el **stack demo**,
+  un proyecto compose aparte con su propio volumen:
+  ```bash
+  # (raíz) libera los puertos 5432/8000/3000; los datos reales quedan intactos
+  docker compose stop
+  SR_MODE=fake docker compose -p tabernas-demo up -d --build --wait backend
+  SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py
+  # … al terminar:
+  docker compose -p tabernas-demo down -v   # borra solo los datos demo
+  docker compose up -d --wait               # vuelve el stack real
+  ```
 - Commits `<type>: <description>` cerrando con
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
@@ -115,20 +130,24 @@ frontend/
 - [ ] **Step 1: Crear la app y agregar dependencias**
 
 ```bash
+node -v   # debe ser >= 24.15 (jsdom 30); si no, detente y avisa
 cd /Users/didiertm/Documents/Projects/TabernasCerveceras
 npx create-next-app@16 frontend --ts --tailwind --eslint --app --src-dir \
-  --import-alias "@/*" --use-npm --yes
+  --import-alias "@/*" --use-npm --no-agents-md --no-agent-feedback --disable-git --yes
 cd frontend
-npx shadcn@latest init --defaults
-npx shadcn@latest add button input label table sheet tabs card dialog checkbox sonner
+npx shadcn@4.21 init --template next --preset radix-nova --yes
+npx shadcn@4.21 add --yes button input label table sheet tabs card dialog checkbox sonner
+grep -q '"radix-ui"\|"@radix-ui/' package.json   # confirma Radix (no Base UI)
 npm install @tanstack/react-query openapi-fetch
 npm install -D openapi-typescript vitest @vitest/coverage-v8 @vitejs/plugin-react \
-  vite-tsconfig-paths jsdom @testing-library/react @testing-library/dom \
+  jsdom @testing-library/react @testing-library/dom \
   @testing-library/user-event @testing-library/jest-dom @playwright/test
 rm -f src/app/page.tsx public/*.svg
 ```
-Si `create-next-app` generó archivos de instrucciones para agentes (`AGENTS.md`,
-`CLAUDE.md`) dentro de `frontend/`, bórralos: el repo ya tiene su `CLAUDE.md`.
+Si aun así quedaron archivos de instrucciones para agentes (`AGENTS.md`, `CLAUDE.md`)
+dentro de `frontend/`, bórralos: el repo ya tiene su `CLAUDE.md`. Vite 8 resuelve los
+alias de `tsconfig` de forma nativa (`resolve.tsconfigPaths`), por eso no se instala
+`vite-tsconfig-paths`.
 
 - [ ] **Step 2: Configurar scripts, Next, ESLint y Vitest**
 
@@ -173,11 +192,11 @@ En `frontend/eslint.config.mjs`, agrega a la lista de `ignores` (o crea un objet
 `frontend/vitest.config.mts`:
 ```ts
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [react()],
+  resolve: { tsconfigPaths: true },
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
@@ -279,9 +298,10 @@ En `.dockerignore` agrega `**/coverage`, `**/playwright-report`, `**/test-result
 Run: `npm run lint && npm run typecheck && npm run build`
 Expected: sin errores (Vitest aún no tiene tests; se verifica en Task 2).
 
-Run (raíz): `SR_MODE=fake docker compose up -d --build --wait frontend && docker compose ps frontend`
-Expected: `frontend` en estado `healthy` (aún no hay páginas propias; el healthcheck
-consulta `/login`, que se crea en Task 3 — hasta entonces basta con `running`).
+Run (raíz): `docker compose build frontend`
+Expected: la imagen se construye. (No se levanta todavía: el healthcheck consulta
+`/login`, que se crea en Task 3, así que `--wait` fallaría; el contenedor se prueba
+de punta a punta en Task 9.)
 
 - [ ] **Step 5: Commit**
 
@@ -317,7 +337,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ```bash
 cd /Users/didiertm/Documents/Projects/TabernasCerveceras
-SR_MODE=fake docker compose up -d --build backend
+docker compose up -d --wait backend   # el OpenAPI no depende de SR_MODE: usa el stack tal cual
 cd frontend && npm run gen:api
 grep -c "DayOut" src/lib/api/schema.d.ts
 ```
@@ -839,7 +859,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   `WARNING_LABELS`, `incidentFor(outcome) -> Incident | null`.
 - Produces (`period.ts`): `useEnsurePeriod(requested: string | null, buildQuery: (today: string) => string)`.
 - Produces: `useInvalidate(...keys)`; `Providers`; `AppShell`; `QueryError({error, onRetry})`,
-  `FormError({error})`, `Loading()`; `ExportButton({from, to})`;
+  `FormError({error})`, `Loading()`; `ExportButton({from, to, group})`;
   `PeriodNav({label, previousHref, nextHref})`.
 
 - [ ] **Step 1: Escribir los tests (fallan)**
@@ -1131,6 +1151,7 @@ export const WARNING_LABELS: Record<WarningCode, string> = {
   UNMAPPED_CHECKIN: "Checada sin empleado",
   ORPHAN_JUSTIFICATION: "Justificación sin incidencia",
   MISSING_RH_NAME: "Falta nombre en RH",
+  NO_SR_ID: "Sin id de SR",
 };
 
 /** Index = backend weekday (0 = Monday … 6 = Sunday). */
@@ -1371,8 +1392,11 @@ export function FormError({ error }: { error: unknown }) {
 ```tsx
 import { Button } from "@/components/ui/button";
 
-export function ExportButton({ from, to }: { from: string; to: string }) {
-  const query = new URLSearchParams({ from, to }).toString();
+type Props = { from: string; to: string; group: "week" | "month" };
+
+/** `group` sets how the workbook's summary sheet is grouped (backend default: week). */
+export function ExportButton({ from, to, group }: Props) {
+  const query = new URLSearchParams({ from, to, group }).toString();
   return (
     <Button asChild variant="outline">
       <a href={`/backend/attendance/export.xlsx?${query}`} download>
@@ -2019,7 +2043,7 @@ function Week({ from }: { from: string }) {
           previousHref={`/semana?desde=${addDays(from, -7)}`}
           nextHref={`/semana?desde=${addDays(from, 7)}`}
         />
-        <ExportButton from={from} to={to} />
+        <ExportButton from={from} to={to} group="week" />
       </div>
       {calendar.isPending && <Loading />}
       {calendar.isError && <QueryError error={calendar.error} onRetry={() => calendar.refetch()} />}
@@ -2054,10 +2078,9 @@ export default async function SemanaPage({ searchParams }: Props) {
 
 - [ ] **Step 6: Verificar a mano con el stack en modo demo**
 
+Levanta el **stack demo** (ver Global Constraints; solo `db` + `backend`, el puerto
+3000 queda para `npm run dev`), y luego:
 ```bash
-cd /Users/didiertm/Documents/Projects/TabernasCerveceras
-SR_MODE=fake docker compose up -d --build
-SR_MODE=fake docker compose run --rm backend python /scripts/seed_demo.py
 cd frontend && BACKEND_URL=http://127.0.0.1:8000 FAKE_AUTH_USER=demo FAKE_AUTH_PASSWORD=demo npm run dev
 ```
 Abre http://localhost:3000 → login `demo`/`demo` → `/semana`. Verifica: 7 filas
@@ -2351,7 +2374,7 @@ function Incidents({ from, to }: { from: string; to: string }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <RangeForm from={from} to={to} />
-        <ExportButton from={from} to={to} />
+        <ExportButton from={from} to={to} group="week" />
       </div>
       {incidents.isPending && <Loading />}
       {incidents.isError && <QueryError error={incidents.error} onRetry={() => incidents.refetch()} />}
@@ -2611,7 +2634,7 @@ function Month({ month }: { month: string }) {
           previousHref={`/mes?mes=${addDays(from, -1).slice(0, 7)}`}
           nextHref={`/mes?mes=${addDays(to, 1).slice(0, 7)}`}
         />
-        <ExportButton from={from} to={to} />
+        <ExportButton from={from} to={to} group="month" />
       </div>
       {summary.isPending && <Loading />}
       {summary.isError && <QueryError error={summary.error} onRetry={() => summary.refetch()} />}
@@ -3346,7 +3369,7 @@ Expected: todo en verde.
 Verificación manual (stack demo): editar nombre RH y área se refleja en `/semana`;
 crear una regla que se traslapa muestra el mensaje 409 del backend; "Registrar cierre"
 para un día pinta la columna como "Cerrado" en la semana; con el backend detenido
-(`docker compose stop backend`) cada pestaña muestra el error con "Reintentar".
+(`docker compose -p tabernas-demo stop backend`) cada pestaña muestra el error con "Reintentar".
 
 - [ ] **Step 4: Commit**
 
@@ -3363,7 +3386,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Files:**
 - Create: `frontend/playwright.config.ts`, `frontend/e2e/attendance.spec.ts`
-- Modify: `.github/workflows/ci.yml` (jobs `frontend` y `e2e`), `CLAUDE.md`,
+- Modify: `.github/workflows/ci.yml` (jobs `frontend` y `e2e`), `CLAUDE.md`, `docs/plan.md`,
   `.gitignore`
 
 **Interfaces:**
@@ -3430,13 +3453,15 @@ Agrega a `.gitignore`: `frontend/playwright-report/`, `frontend/test-results/`,
 
 ```bash
 cd /Users/didiertm/Documents/Projects/TabernasCerveceras
-docker compose down -v
-SR_MODE=fake docker compose up -d --build --wait
-SR_MODE=fake docker compose run --rm backend python /scripts/seed_demo.py
+docker compose stop                                   # datos reales intactos
+docker compose -p tabernas-demo down -v               # demo desde cero (solo datos demo)
+SR_MODE=fake docker compose -p tabernas-demo up -d --build --wait   # db + backend + frontend
+SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py
 cd frontend && npx playwright install chromium && npm run e2e
 ```
 Expected: 2 passed. (Cada corrida consume una incidencia sin justificar; para repetir
-desde cero, `docker compose down -v` y vuelve a sembrar.)
+desde cero, repite el `down -v` **con `-p tabernas-demo`** y vuelve a sembrar.) Al
+terminar: `docker compose -p tabernas-demo down -v && docker compose up -d --wait`.
 
 - [ ] **Step 3: Agregar jobs de CI**
 
@@ -3498,13 +3523,21 @@ Agrega a la sección `## Commands` de `CLAUDE.md`:
 - Frontend checks (from `frontend/`): `npm run lint && npm run typecheck && npm test`
 - Regenerate API types after backend changes (backend running): `npm run gen:api`
 - E2E (demo stack up and seeded): `npm run e2e`
-- Full demo without SR: `SR_MODE=fake docker compose up -d --build --wait && SR_MODE=fake docker compose run --rm backend python /scripts/seed_demo.py` → http://127.0.0.1:3000 (demo/demo)
+- Full demo without SR, isolated from the real data (separate compose project and volume; stop the real stack first with `docker compose stop`): `SR_MODE=fake docker compose -p tabernas-demo up -d --build --wait && SR_MODE=fake docker compose -p tabernas-demo run --rm backend python /scripts/seed_demo.py` → http://127.0.0.1:3000 (demo/demo); clean up with `docker compose -p tabernas-demo down -v`
 ```
+
+Agrega también a `## Gotchas` de `CLAUDE.md`:
+```markdown
+- The default compose project's Postgres holds the real configuration: never `docker compose down -v` it or start it with `SR_MODE=fake`. Demo/E2E runs use `-p tabernas-demo`.
+```
+Y actualiza la línea `Status:` de `CLAUDE.md` y el estado de la Etapa 1 en
+`docs/plan.md` §5 (frontend 1f terminado; pendiente la aceptación con el gerente).
 
 - [ ] **Step 5: Verificación final de la etapa**
 
-Run (raíz): `docker compose down -v && docker compose up -d --build --wait` (con `.env`
-real, `SR_MODE=live`) y abre http://127.0.0.1:3000.
+Run (raíz): `docker compose -p tabernas-demo down -v; docker compose up -d --build --wait`
+(con `.env` real, `SR_MODE=live`; **sin `-v`**: conserva la configuración real) y abre
+http://127.0.0.1:3000.
 Expected: login → `/semana` muestra la semana actual con datos reales de SR (tras la
 configuración de Plan A, Task 20); `/incidencias` coincide con lo revisado con el
 gerente.
@@ -3512,7 +3545,7 @@ gerente.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/playwright.config.ts frontend/e2e .github/workflows/ci.yml CLAUDE.md .gitignore
+git add frontend/playwright.config.ts frontend/e2e .github/workflows/ci.yml CLAUDE.md docs/plan.md .gitignore
 git commit -m "test: add attendance E2E flow and frontend CI jobs
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"

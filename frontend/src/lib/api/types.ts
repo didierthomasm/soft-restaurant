@@ -1,0 +1,29 @@
+import type { components } from "./schema";
+
+type Schemas = components["schemas"];
+
+export type CalendarOut = Schemas["CalendarOut"];
+export type DayOut = Schemas["DayOut"];
+export type EmployeeRef = Schemas["EmployeeRef"];
+export type IncidentsOut = Schemas["IncidentsOut"];
+export type RhRowOut = Schemas["RhRowOut"];
+export type SummaryOut = Schemas["SummaryOut"];
+export type WarningOut = Schemas["WarningOut"];
+export type EmployeeOut = Schemas["EmployeeOut"];
+export type EmployeeUpdate = Schemas["EmployeeUpdate"];
+export type SrEmployeeOut = Schemas["SrEmployeeOut"];
+export type RestRuleOut = Schemas["RestRuleOut"];
+export type RestRuleCreate = Schemas["RestRuleCreate"];
+export type ExceptionOut = Schemas["ExceptionOut"];
+export type ExceptionCreate = Schemas["ExceptionCreate"];
+export type RestSwapCreate = Schemas["RestSwapCreate"];
+export type JustificationCreate = Schemas["JustificationCreate"];
+export type JustificationUpdate = Schemas["JustificationUpdate"];
+export type SettingsBody = Schemas["SettingsBody"];
+export type Outcome = Schemas["Outcome"];
+export type RhType = Schemas["RhType"];
+export type Incident = Schemas["Incident"];
+export type ExceptionKind = Schemas["ExceptionKind"];
+export type Area = Schemas["Area"];
+export type WarningCode = Schemas["WarningCode"];
+export type Grouping = Schemas["Grouping"];
