@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CalendarOut, DayOut } from "@/lib/api/types";
 
-import { WeekGrid } from "./week-grid";
+import { findDaySelection, WeekGrid } from "./week-grid";
 
 function day(overrides: Partial<DayOut>): DayOut {
   return {
@@ -47,5 +47,19 @@ describe("WeekGrid", () => {
     await userEvent.click(screen.getByRole("button", { name: /lun 21\/09: Retardo 16:51/ }));
     expect(onSelect).toHaveBeenCalledWith(calendar.days[0], calendar.employees[0]);
     expect(screen.getByRole("button", { name: /mar 22\/09/ })).toBeDisabled();
+  });
+});
+
+describe("findDaySelection", () => {
+  it("finds the employee and day of a deep link", () => {
+    expect(findDaySelection(calendar, 1, "2026-09-21")).toEqual({
+      day: calendar.days[0],
+      employee: calendar.employees[0],
+    });
+  });
+
+  it("ignores unknown employees and days outside the calendar", () => {
+    expect(findDaySelection(calendar, 99, "2026-09-21")).toBeNull();
+    expect(findDaySelection(calendar, 1, "2026-10-05")).toBeNull();
   });
 });

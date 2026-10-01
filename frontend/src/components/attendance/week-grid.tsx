@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils";
 
 export type DaySelection = { day: DayOut; employee: EmployeeRef };
 
+export function findDaySelection(
+  calendar: CalendarOut,
+  employeeId: number,
+  day: string,
+): DaySelection | null {
+  const employee = calendar.employees.find((e) => e.id === employeeId);
+  const found = calendar.days.find((d) => d.employee_id === employeeId && d.day === day);
+  return employee && found ? { day: found, employee } : null;
+}
+
 type Props = {
   calendar: CalendarOut;
   onSelect: (day: DayOut, employee: EmployeeRef) => void;

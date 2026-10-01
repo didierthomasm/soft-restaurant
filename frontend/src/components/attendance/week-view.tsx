@@ -12,19 +12,36 @@ import { useEnsurePeriod } from "@/lib/period";
 import { DayPanel } from "./day-panel";
 import { Legend } from "./legend";
 import { WarningsList } from "./warnings-list";
-import { type DaySelection, WeekGrid } from "./week-grid";
+import { type DaySelection, findDaySelection, WeekGrid } from "./week-grid";
 
-export function WeekView({ requestedStart }: { requestedStart: string | null }) {
+export type DayFocus = { employeeId: number; day: string };
+
+export function WeekView({
+  requestedStart,
+  focus = null,
+}: {
+  requestedStart: string | null;
+  focus?: DayFocus | null;
+}) {
   const buildQuery = useCallback((today: string) => `desde=${weekStart(today)}`, []);
   useEnsurePeriod(requestedStart, buildQuery);
   if (requestedStart === null) return <Loading />;
-  return <Week from={weekStart(requestedStart)} />;
+  return <Week from={weekStart(requestedStart)} focus={focus} />;
 }
 
-function Week({ from }: { from: string }) {
+function Week({ from, focus }: { from: string; focus: DayFocus | null }) {
   const to = addDays(from, 6);
   const calendar = useCalendar(from, to);
   const [selection, setSelection] = useState<DaySelection | null>(null);
+  const [focusDismissed, setFocusDismissed] = useState(false);
+  const focused =
+    !focusDismissed && focus && calendar.data
+      ? findDaySelection(calendar.data, focus.employeeId, focus.day)
+      : null;
+  function close() {
+    setSelection(null);
+    setFocusDismissed(true);
+  }
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -47,7 +64,7 @@ function Week({ from }: { from: string }) {
           <Legend />
         </>
       )}
-      <DayPanel selection={selection} onClose={() => setSelection(null)} />
+      <DayPanel selection={selection ?? focused} onClose={close} />
     </div>
   );
 }
