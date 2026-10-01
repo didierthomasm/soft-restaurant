@@ -201,7 +201,10 @@ la lista para capturar en RH.
 
 ### Etapa 2 — Agente de revisión semanal
 
-> Estado: **diseño en revisión** — [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md).
+> Estado: **diseño aprobado, planes escritos** — diseño en
+> [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md);
+> Plan A (backend) en [`plans/2026-10-01-etapa-2-plan-a-backend.md`](plans/2026-10-01-etapa-2-plan-a-backend.md)
+> y Plan B (frontend) en [`plans/2026-10-01-etapa-2-plan-b-frontend.md`](plans/2026-10-01-etapa-2-plan-b-frontend.md).
 
 **Objetivo:** cada jueves (día de envío a RH), un agente prepara el borrador del
 reporte de incidencias.

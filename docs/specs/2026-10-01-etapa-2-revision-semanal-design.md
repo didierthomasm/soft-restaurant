@@ -1,6 +1,7 @@
 # Etapa 2 — Agente de revisión semanal: diseño
 
-> Estado: **en revisión** (2026-10-01). Deriva de [`plan.md`](../plan.md) §5 Etapa 2 y se
+> Estado: **aprobado** (2026-10-01; ajustes del 2026-10-01 al escribir el plan: loop manual en
+> vez del Tool Runner, sin APScheduler, umbrales en `/settings/review`). Deriva de [`plan.md`](../plan.md) §5 Etapa 2 y se
 > apoya en todo lo construido en la Etapa 1
 > ([`2026-09-29-etapa-1-asistencia-design.md`](2026-09-29-etapa-1-asistencia-design.md)).
 > Reglas de negocio de `plan.md` §4 y §6 aplican tal cual.
@@ -28,10 +29,10 @@ justifica con las acciones que ya existen y aprueba desde la UI.
 |---|---|---|
 | E1 | **Periodos:** el jueves se revisa la semana ISO en curso (lun–jue reales, vie–dom futuros); el lunes se revisa la semana anterior completa. | Así se envía a RH: jueves ~17:30 con ajustes hasta el domingo (`plan.md` §4). |
 | E2 | **El código detecta, el agente explica.** Los hallazgos son reglas deterministas en `domain/review.py`; el agente prioriza, explica y sugiere acción. La lista para RH sale de `to_rh_rows`, nunca del modelo. | Principio 5 de `plan.md`: los agentes no inventan números. Hace la evaluación objetiva. |
-| E3 | **Agente con herramientas** (Tool Runner del SDK `anthropic`), solo de lectura, sobre `services/` (mismo camino que la API; nunca SR ni Postgres directo). | Elección del enfoque B: el agente decide qué contexto consultar (historial, día a día). |
+| E3 | **Agente con herramientas** (loop propio sobre `client.beta.messages.create` del SDK `anthropic`), solo de lectura, sobre datos ya calculados por `services/` (nunca SR ni Postgres directo). | Elección del enfoque B: el agente decide qué contexto consultar. Loop propio en vez del Tool Runner (beta): el runner de Python no reanuda `pause_turn`, complica el reintento de validación en la misma conversación y no se puede sustituir por un cliente falso en tests. |
 | E4 | **Seudónimos:** hacia la API solo viajan `E{employee.id}`; el backend sustituye el nombre corto al servir el borrador. | Ningún nombre real sale del equipo. |
 | E5 | **Validador en código** con un reintento; si falla, el borrador queda sin narrativa (`READY_NO_NARRATIVE`). | La garantía "no omite, no inventa" no depende del prompt. Los hallazgos siguen sirviendo sin texto. |
-| E6 | **Servicio `worker`** (misma imagen) con APScheduler; único ejecutor de corridas. La API solo encola. | Sin corridas duplicadas, la API no se bloquea con llamadas largas y un fallo del scheduler no tumba la API. |
+| E6 | **Servicio `worker`** (misma imagen), un loop cada 10 s que programa y ejecuta; único ejecutor de corridas. La API solo encola. | Sin corridas duplicadas, la API no se bloquea con llamadas largas. La misma regla de recuperación (§6.2) cubre las corridas a tiempo, así que no hace falta APScheduler. |
 | E7 | **El borrador se persiste como snapshot** (hallazgos, filas RH, narrativa). | Excepción explícita a D2 de la Etapa 1: un borrador es un documento fechado. La UI avisa si los datos cambiaron (`stale`). |
 | E8 | **`REVIEW_AGENT=live\|fake`.** `fake` genera narrativa determinista con plantilla. | Demo pública, E2E y CI sin llave ni costo, igual que `SR_MODE`. |
 | E9 | **Modelo `claude-opus-5-5`**, `effort: "medium"`, `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`) para rechazos. Configurable con `REVIEW_MODEL`. | Modelo por defecto actual; dos corridas por semana cuestan centavos. |
@@ -41,22 +42,27 @@ justifica con las acciones que ya existen y aprueba desde la UI.
 
 ```
 backend/src/tabernas/
+  domain/review_types.py        # enums y dataclasses de la revisión, ReviewSettings
   domain/review.py              # hallazgos deterministas (§4)
+  domain/review_schedule.py     # ranuras jueves/lunes y recuperación (§6.2)
   agents/
-    pseudonyms.py               # E{id} ↔ empleado, render de {E12}
+    pseudonyms.py               # E{id} ↔ empleado, render de {E12}, scrub
     weekly_review/
+      agent.py                  # protocolos ReviewAgent y MessagesApi, AgentOutcome
       tools.py                  # 4 herramientas de lectura (§5.2)
       prompt.py                 # prompt de sistema fijo (español)
-      schema.py                 # salida estructurada (Pydantic)
+      schema.py                 # salida estructurada (esquema + Pydantic)
       validate.py               # validador (§5.4)
-      runner.py                 # Tool Runner + reintento; interfaz ReviewAgent
+      runner.py                 # LiveReviewAgent: loop propio + reintento
+      anthropic_api.py          # adaptador del SDK anthropic (MessagesApi)
       fake.py                   # FakeReviewAgent (REVIEW_AGENT=fake)
+      factory.py                # build_review_agent(settings)
   services/review.py            # orquesta: reporte → hallazgos → agente → snapshot
-  repos/reviews.py              # weekly_review
-  api/routes/reviews.py         # §7
-  worker.py                     # APScheduler + cola (§6)
+  repos/reviews.py, repos/review_codec.py, repos/review_settings.py
+  api/routes/reviews.py         # §7; /settings/review en api/routes/settings.py
+  worker.py                     # loop: programa, recupera y ejecuta (§6)
 backend/tests/
-  domain/test_review.py  agents/  services/  repos/  api/  test_worker.py
+  domain/  agents/  services/  repos/  api/  test_worker.py
   eval/                         # @pytest.mark.agent (§10.2)
 frontend/src/app/(app)/revision/  + lib/api/reviews.ts + components/review/
 ```
@@ -87,7 +93,7 @@ class Finding:
 | `ABSENT_NO_EXCEPTION` | `ABSENT` sin `justification_id`, que no forme parte de una racha | ese día (uno por día) |
 | `NO_CHECKIN_STREAK` | ≥ `review_streak_days` (2) días laborales consecutivos en `ABSENT` sin justificar; la racha puede empezar en la semana anterior siempre que termine dentro de la semana revisada | todos los de la racha (uno por racha) |
 | `REPEATED_LATE` | `LATE` **sin justificar** ≥ `review_late_week` (2) en la semana, **o** semanas con algún `LATE` (justificado o no: cuenta el patrón) ≥ `review_late_weeks` (3) entre las 4 previas y la actual | los retardos de la semana (uno por empleado) |
-| `CONFIG_WARNING` | cada aviso del reporte de la semana: `NO_REST_RULE`, `UNMAPPED_CHECKIN`, `MISSING_RH_NAME`, `ORPHAN_JUSTIFICATION` (deduplicado por código + empleado) | el del aviso, si tiene |
+| `CONFIG_WARNING` | cada aviso del reporte de la semana (`NO_REST_RULE`, `UNMAPPED_CHECKIN`, `MISSING_RH_NAME`, `ORPHAN_JUSTIFICATION`, `NO_SR_ID`), deduplicado por código + empleado. `facts` guarda el código y el número de ocurrencias, **nunca** el texto del aviso (puede traer nombres) | los del aviso, si tiene |
 
 - "Consecutivos" se mide sobre días **laborales planeados** (`planned == WORK`): un
   descanso o cierre en medio no rompe la racha; un día `OK`/`LATE` sí.
@@ -97,7 +103,7 @@ class Finding:
 - Orden de salida: tipo (orden de la tabla), luego empleado, luego primer día.
 - Los umbrales viven en `setting` (claves `review_streak_days`, `review_late_week`,
   `review_late_weeks`), sembrados por migración y editables en Configuración
-  (`PUT /settings` valida enteros 1–7, 1–7 y 1–5).
+  (`GET/PUT /settings/review`, que valida enteros 1–7, 1–7 y 1–5; `/settings` no cambia).
 
 Los ids son estables: correr dos veces sobre los mismos datos produce los mismos ids, lo
 que permite comparar el snapshot contra el estado actual (`stale`).
@@ -107,11 +113,12 @@ que permite comparar el snapshot contra el estado actual (`stale`).
 ### 5.1 Ejecución
 
 - `ReviewAgent` (protocolo): `run(context: ReviewContext) -> AgentOutcome`.
-  `LiveReviewAgent` usa `client.beta.messages.tool_runner` con `claude-opus-5-5`,
+  `LiveReviewAgent` corre un loop propio (solo agrega mensajes, nunca edita el
+  historial) sobre `client.beta.messages.create` con `claude-opus-5-5`,
   `output_config={"effort": "medium", "format": <esquema §5.3>}`, prompt de sistema con
-  `cache_control`, `max_tokens` 16000 y tope de **8 vueltas** del loop (exceder = fallo
-  de narrativa). El plan verifica primero que el Tool Runner acepte `output_config`;
-  si no, se usa el loop manual con el mismo contrato.
+  `cache_control`, `max_tokens` 16000 y tope de **8 vueltas** (exceder = fallo de
+  narrativa). Un adaptador (`MessagesApi`) aísla al SDK para poder probar el loop con
+  respuestas guionizadas.
 - Se revisa `stop_reason` antes de leer contenido (`refusal`, `max_tokens`).
 - `ReviewContext` = semana, `as_of`, hallazgos, reporte de la semana e historial ya
   calculados por el servicio: las herramientas responden de memoria y no vuelven a
@@ -192,10 +199,10 @@ caché funcione; la semana y `as_of` van en el primer mensaje del usuario.
 
 ### 6.2 Programación y recuperación
 
-- APScheduler, zona `APP_TIMEZONE`. Ranuras: **jueves 17:30** → semana ISO en curso
+- Sin librería de cron; zona `APP_TIMEZONE`. Ranuras: **jueves 17:30** → semana ISO en curso
   (`trigger=THURSDAY`); **lunes 09:00** → semana anterior (`trigger=MONDAY`). Las horas
-  son constantes en `config.py` (`REVIEW_THURSDAY_AT`, `REVIEW_MONDAY_AT`), no UI.
-- Al arrancar y cada hora, el worker calcula la última ranura vencida; si venció hace
+  son constantes en `domain/review_schedule.py`, no UI.
+- En cada vuelta del loop (10 s), el worker calcula la última ranura vencida; si venció hace
   ≤ 24 h y no existe ninguna corrida con ese `trigger` para esa semana, la encola. Así
   la Mac dormida a la hora programada genera el borrador al despertar.
 - Encolar es idempotente: si ya hay una `QUEUED`/`RUNNING` para la semana, no se crea
@@ -211,12 +218,12 @@ caché funcione; la semana y `as_of` van en el primer mensaje del usuario.
 | `iso_year`, `iso_week` | int | semana revisada |
 | `trigger` | `THURSDAY` / `MONDAY` / `MANUAL` | |
 | `status` | `QUEUED` / `RUNNING` / `READY` / `READY_NO_NARRATIVE` / `FAILED` / `APPROVED` | |
-| `as_of` | timestamptz null | cuándo se tomaron los datos |
+| `as_of` | timestamp null | cuándo se tomaron los datos (hora local naive, como el reloj de la app) |
 | `findings`, `rh_rows` | jsonb null | snapshot con seudónimos |
 | `narrative` | jsonb null | `ReviewNarrative` con seudónimos |
 | `model`, `input_tokens`, `output_tokens` | null | registro de la corrida |
 | `error` | text null | mensaje en español, sin secretos |
-| `approved_at` | timestamptz null | |
+| `approved_at` | timestamp null | hora local naive |
 
 - Índice único parcial: una sola fila `QUEUED`/`RUNNING` por (`iso_year`, `iso_week`).
 - Solo `READY` y `READY_NO_NARRATIVE` pueden aprobarse; aprobar es definitivo (para
@@ -227,8 +234,8 @@ caché funcione; la semana y `as_of` van en el primer mensaje del usuario.
 
 | Método y ruta | Descripción |
 |---|---|
-| `POST /reviews` `{year, week}` | encola `MANUAL` → **202** con la fila; 409 `REVIEW_IN_PROGRESS` si ya hay una en curso |
-| `GET /reviews?year&week` | lista de la semana, más reciente primero (sin `stale`) |
+| `POST /reviews` `{year, week}` | encola `MANUAL` → **202** con la fila; 409 `CONFLICT` si ya hay una en curso |
+| `GET /reviews?year&week` | lista de la semana (o las 20 más recientes sin filtros), más reciente primero (sin `stale`) |
 | `GET /reviews/{id}` | detalle con nombres ya sustituidos y `stale: bool \| null` (§7.3) |
 | `POST /reviews/{id}/approve` | → `APPROVED`; 409 si el estado no lo permite |
 
