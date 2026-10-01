@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict
 
 logger = logging.getLogger(__name__)
 
+SR_UNAVAILABLE_MESSAGE = "No se pudo leer SoftRestaurant. Revisa Tailscale."
+
 
 class SrUnavailableError(RuntimeError):
     """SR could not be reached or a query failed. Message is safe to show to users."""
