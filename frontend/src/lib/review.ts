@@ -9,7 +9,7 @@ import type {
   WarningCode,
 } from "@/lib/api/types";
 
-import { formatDate } from "./dates";
+import { formatDate, isoWeekMonday, weekStart } from "./dates";
 import { WARNING_LABELS } from "./labels";
 
 export const FINDING_LABELS: Record<FindingKind, string> = {
@@ -104,4 +104,9 @@ export function actionLabel(finding: FindingOut, item: NarrativeItemOut | null):
   const suggested = item ? ACTION_LABELS[item.suggested_action] : "";
   if (suggested) return suggested;
   return finding.kind === "CONFIG_WARNING" ? "Ir a configuración" : "Ver día";
+}
+
+/** Monday shown by /revision without ?desde: the week of the newest draft, else this week. */
+export function defaultReviewMonday(latest: { year: number; week: number } | undefined, today: string): string {
+  return latest ? isoWeekMonday(latest.year, latest.week) : weekStart(today);
 }

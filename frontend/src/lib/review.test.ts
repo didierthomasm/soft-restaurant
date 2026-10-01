@@ -6,6 +6,7 @@ import {
   actionHref,
   actionLabel,
   canApprove,
+  defaultReviewMonday,
   describeFacts,
   formatDays,
   groupByPriority,
@@ -96,5 +97,16 @@ describe("review helpers", () => {
     expect(actionLabel(finding({}), item("x", { suggested_action: "NONE" }))).toBe("Ver día");
     expect(actionLabel(finding({}), null)).toBe("Ver día");
     expect(actionLabel(finding({ kind: "CONFIG_WARNING" }), null)).toBe("Ir a configuración");
+  });
+});
+
+describe("defaultReviewMonday", () => {
+  it("uses the week of the newest draft", () => {
+    expect(defaultReviewMonday({ year: 2026, week: 39 }, "2026-10-01")).toBe("2026-09-21");
+    expect(defaultReviewMonday({ year: 2026, week: 53 }, "2026-10-01")).toBe("2026-12-28");
+  });
+
+  it("falls back to the current week without drafts", () => {
+    expect(defaultReviewMonday(undefined, "2026-10-01")).toBe("2026-09-28");
   });
 });
