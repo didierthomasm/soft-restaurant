@@ -14,6 +14,7 @@ from tabernas.agents.weekly_review.anthropic_api import AnthropicMessages
 from tabernas.agents.weekly_review.runner import LiveReviewAgent
 from tabernas.config import Settings
 from tabernas.domain.review_types import Priority
+from tests.eval.leaks import leaked_names
 from tests.eval.scenarios import SCENARIOS, Scenario
 
 pytestmark = pytest.mark.agent
@@ -55,10 +56,9 @@ def test_agent_on_synthetic_week(scenario: Scenario, live: tuple[anthropic.Anthr
         f"\n[{scenario.name}] intentos={outcome.attempts} llamadas={len(api.payloads)} "
         f"tokens={outcome.input_tokens}/{outcome.output_tokens} costo≈${cost:.4f}"
     )
-    sent = "\n".join(api.payloads).casefold()
-    for employee in scenario.context.employees:
-        for name in filter(None, (employee.short_name, employee.rh_name)):
-            assert name.casefold() not in sent, f"{name} salió hacia la API"
+    for payload in api.payloads:
+        leaks = leaked_names(payload, scenario.context.employees)
+        assert not leaks, f"nombres salieron hacia la API: {leaks}"
     assert outcome.narrative is not None, outcome.error
     assert outcome.attempts == 1, "el validador debe pasar a la primera"
     kinds = {finding.id: finding.kind for finding in scenario.context.findings}

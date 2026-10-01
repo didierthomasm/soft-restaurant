@@ -151,11 +151,20 @@ def test_tool_errors_go_back_as_is_error_results() -> None:
 
 @pytest.mark.parametrize(
     ("stop_reason", "message"),
-    [("refusal", "declinó"), ("max_tokens", "se cortó"), ("pause_turn", "inesperadamente")],
+    [("refusal", "declinó"), ("max_tokens", "se cortó")],
 )
 def test_other_stop_reasons_give_no_narrative(stop_reason: str, message: str) -> None:
     outcome = run(ScriptedApi([final_turn("{}", stop_reason=stop_reason)]))
     assert outcome.narrative is None and message in (outcome.error or "")
+
+
+def test_pause_turn_resumes_and_gives_a_narrative() -> None:
+    context = busy_context()
+    paused = ModelTurn("pause_turn", ({"type": "text", "text": "..."},), "", (), 10, 1)
+    api = ScriptedApi([paused, final_turn(answer(context))])
+    outcome = run(api, context)
+    assert outcome.narrative is not None and outcome.attempts == 1
+    assert api.requests[1]["messages"][-1]["role"] == "assistant"
 
 
 def test_turn_limit() -> None:

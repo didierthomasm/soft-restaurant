@@ -68,7 +68,7 @@ def test_send_adds_the_fallback_beta_and_passes_params_through() -> None:
             "max_tokens": 10,
             "messages": [],
             "betas": [FALLBACK_BETA],
-            "extra_body": {"fallbacks": "default"},
+            "fallbacks": "default",
         }
     ]
 
@@ -89,9 +89,25 @@ def test_send_adds_the_fallback_beta_and_passes_params_through() -> None:
             "500",
         ),
         (anthropic.APIConnectionError(request=REQUEST), "conectar"),
+        (
+            anthropic.APIResponseValidationError(
+                httpx2.Response(200, request=REQUEST), body=None, message="bad shape"
+            ),
+            "inesperado",
+        ),
     ],
 )
 def test_sdk_errors_become_agent_api_errors(error: Exception, expected: str) -> None:
     client, _ = client_with(error)
     with pytest.raises(AgentApiError, match=expected):
         AnthropicMessages(client).send({})
+
+
+def test_text_before_a_fallback_block_is_dropped() -> None:
+    msg = message("end_turn")
+    msg.content = [
+        SimpleNamespace(type="text", text='{"parcial'),
+        SimpleNamespace(type="fallback"),
+        SimpleNamespace(type="text", text='{"summary": "ok"}'),
+    ]
+    assert to_model_turn(msg).text == '{"summary": "ok"}'

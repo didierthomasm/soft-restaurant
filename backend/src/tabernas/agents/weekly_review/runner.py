@@ -45,6 +45,8 @@ class LiveReviewAgent:
                     results = tool_results(tools, turn.tool_calls)
                     messages.append({"role": "user", "content": results})
                     continue
+                if turn.stop_reason == "pause_turn":
+                    continue  # server-side tool paused: resend to resume (counts as a turn)
                 if turn.stop_reason != "end_turn":
                     return self._outcome(None, stop_message(turn.stop_reason), tokens, attempts)
                 attempts += 1

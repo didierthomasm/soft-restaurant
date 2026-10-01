@@ -18,7 +18,7 @@ class AnthropicMessages:
     def send(self, params: Mapping[str, Any]) -> ModelTurn:
         try:
             message = self._client.beta.messages.create(
-                **params, betas=[FALLBACK_BETA], extra_body={"fallbacks": "default"}
+                **params, betas=[FALLBACK_BETA], fallbacks="default"
             )
         except anthropic.RateLimitError as exc:
             raise AgentApiError(
@@ -29,7 +29,18 @@ class AnthropicMessages:
             raise AgentApiError(f"La API de Claude respondió con error {status}.") from exc
         except anthropic.APIConnectionError as exc:
             raise AgentApiError("No se pudo conectar con la API de Claude.") from exc
+        except anthropic.APIError as exc:
+            raise AgentApiError("Error inesperado de la API de Claude.") from exc
         return to_model_turn(message)
+
+
+def _final_text(content: tuple[Any, ...]) -> str:
+    """Text after the last fallback block: the declining model's partial text is dropped."""
+    start = 0
+    for index, block in enumerate(content):
+        if block.type == "fallback":
+            start = index + 1
+    return "".join(block.text for block in content[start:] if block.type == "text")
 
 
 def to_model_turn(message: Any) -> ModelTurn:
@@ -41,7 +52,7 @@ def to_model_turn(message: Any) -> ModelTurn:
     return ModelTurn(
         stop_reason=message.stop_reason or "",
         content=content,
-        text="".join(block.text for block in content if block.type == "text"),
+        text=_final_text(content),
         tool_calls=tuple(
             ToolCall(id=block.id, name=block.name, input=dict(block.input))
             for block in content
