@@ -40,6 +40,9 @@ export function useReview(id: number | null) {
     queryFn: () =>
       unwrap(api.GET("/reviews/{review_id}", { params: { path: { review_id: id ?? 0 } } })),
     enabled: id !== null,
+    // Justifications and config changes elsewhere make a draft stale without
+    // invalidating it, so re-check on every visit despite the global staleTime.
+    refetchOnMount: "always",
     refetchInterval: (query) =>
       query.state.data && isInProgress(query.state.data.status) ? POLL_MS : false,
   });
