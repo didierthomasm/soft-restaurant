@@ -201,7 +201,7 @@ la lista para capturar en RH.
 
 ### Etapa 2 — Agente de revisión semanal
 
-> Estado: **en implementación** (Plan A, backend, terminado en la rama `feat/etapa-2-backend`) — diseño en
+> Estado: **en implementación** (Plan A, backend, terminado en la rama `feat/etapa-2-backend`; Plan B, frontend, implementado en la rama `feat/etapa-2-frontend`, PR pendiente) — diseño en
 > [`specs/2026-10-01-etapa-2-revision-semanal-design.md`](specs/2026-10-01-etapa-2-revision-semanal-design.md);
 > Plan A (backend) en [`plans/2026-10-01-etapa-2-plan-a-backend.md`](plans/2026-10-01-etapa-2-plan-a-backend.md)
 > y Plan B (frontend) en [`plans/2026-10-01-etapa-2-plan-b-frontend.md`](plans/2026-10-01-etapa-2-plan-b-frontend.md).

@@ -41,6 +41,6 @@ test("generate, read and approve the weekly draft", async ({ page }) => {
 
   await page.goto("/revision?desde=2026-09-21");
   await page.getByRole("button", { name: "Aprobar" }).click();
-  await expect(page.getByText("Borrador aprobado")).toBeVisible();
-  await expect(page.getByText(/aprobado el/)).toBeVisible();
+  await expect(page.getByText("Borrador aprobado", { exact: true })).toBeVisible();
+  await expect(page.getByText(/· aprobado el \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
 });

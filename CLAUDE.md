@@ -11,9 +11,9 @@ coding a stage:
   through the API). Use it; never copy its contents into versioned files.
 
 Status: **Stage 1 (attendance) is closed** (2026-09-30): backend (Plan A) and frontend
-(Plan B, PR #3) merged with CI green. Stage 2 (weekly review agent) is in progress (Plan B frontend implemented on branch
-`feat/etapa-2-frontend`, PR pending): spec
-in `docs/specs/2026-10-01-etapa-2-revision-semanal-design.md`, Plan A (backend) in
+(Plan B, PR #3) merged with CI green. Stage 2 (weekly review agent) is in progress (Plan B
+frontend implemented on branch `feat/etapa-2-frontend`, PR pending): spec in
+`docs/specs/2026-10-01-etapa-2-revision-semanal-design.md`, Plan A (backend) in
 `docs/plans/2026-10-01-etapa-2-plan-a-backend.md`, Plan B (frontend) in
 `docs/plans/2026-10-01-etapa-2-plan-b-frontend.md`. Known Stage 1 follow-ups are listed in
 `docs/plan.md` §5.
