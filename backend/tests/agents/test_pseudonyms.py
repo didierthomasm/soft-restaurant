@@ -118,8 +118,9 @@ def test_scrub_connector_words_not_scrubbed_from_rh_name() -> None:
     employees = [person(1, "ANA", "MARIA DE LOURDES")]
     # Single "Maria" from RH name should be scrubbed
     assert scrub("Maria vino", employees) == "E1 vino"
-    # But "de lourdes" alone should not be scrubbed
-    assert scrub("la de lourdes", employees) == "la de lourdes"
+    # "LOURDES" is a token from "MARIA DE LOURDES", so it gets scrubbed
+    # But "de" is a connector, so it stays
+    assert scrub("la de lourdes", employees) == "la de E1"
 
 
 def test_contains_known_name_with_accents() -> None:
@@ -149,3 +150,36 @@ def test_contains_known_name_not_flagging_first_name_alone() -> None:
     assert not contains_known_name("Revisar con Ana", employees)
     # But full name should be flagged
     assert contains_known_name("Revisar con Ana Prueba", employees)
+
+
+def test_scrub_surnames_after_connectors() -> None:
+    employees = [person(1, "JUAN DE LA CRUZ")]
+    # CRUZ is a surname after connector, should be scrubbed as a token
+    assert scrub("vio a CRUZ y a Juan", employees) == "vio a E1 y a E1"
+    # Full name should also be scrubbed
+    assert scrub("Avisó JUAN DE LA CRUZ", employees) == "Avisó E1"
+
+
+def test_scrub_with_special_letter_n_tilde() -> None:
+    employees = [person(1, "MUÑOZ NUÑEZ")]
+    # Full name "Muñoz Nuñez" should be scrubbed as a whole
+    assert scrub("avisó Muñoz Nuñez", employees) == "avisó E1"
+    # Plain N variant should also match the full name
+    assert scrub("avisó MUNOZ NUNEZ", employees) == "avisó E1"
+    # NFD-decomposed text: the name part is scrubbed, but other combining marks stay
+    nfd_text = unicodedata.normalize("NFD", "avisó Muñoz Nuñez")
+    nfd_result = scrub(nfd_text, employees)
+    # Result should have "E1" in place of the name, with "aviso" + combining accent
+    assert "E1" in nfd_result and "Muñoz" not in nfd_result and "Nuñez" not in nfd_result
+    # Individual tokens should be scrubbed
+    assert scrub("vio a Nuñez y a Muñoz", employees) == "vio a E1 y a E1"
+
+
+def test_contains_known_name_with_n_tilde() -> None:
+    employees = [person(1, "MUÑOZ NUÑEZ")]
+    # Should detect Ñ in employee name
+    assert contains_known_name("Revisar con Muñoz Nuñez", employees)
+    # Should detect plain N variant
+    assert contains_known_name("Revisar con Munoz Nunez", employees)
+    # Should detect mixed accents
+    assert contains_known_name("Revisar con MUÑOZ nunez", employees)

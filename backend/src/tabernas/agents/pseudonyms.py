@@ -112,21 +112,21 @@ def _accent_tolerant_pattern(name: str) -> re.Pattern[str]:
     - Accented variants (JOSÉ, Jose, jose, JOSE, etc.)
     - Whitespace/hyphen variants
     - NFD-decomposed forms (letter + optional combining marks)
+    - Special letters (Ñ/N, Ü/U, Ç/C)
     """
-    stripped = _strip_accents(name.strip())
+    name_clean = name.strip()
 
-    # Map each character to its accent-tolerant class with optional combining marks
+    # Work with the original name to preserve accented character information
+    # (e.g., Ñ in original name must match both N and Ñ in text)
     pattern_parts = []
-    i = 0
-    while i < len(stripped):
-        char = stripped[i]
-        char_upper = char.upper()
+    for char in name_clean:
+        # Strip accents to determine the base letter, then get accent variants
+        stripped_char = _strip_accents(char)
+        char_upper = stripped_char.upper()
 
-        if char_upper in "AEIOUÑC":
-            # Vowels and special characters with accented variants
-            # Allow optional combining marks after the character
+        if char_upper in "AEIOUNC":
+            # Letters with possible accented variants
             accent_class = _get_accent_class(char_upper)
-            # Remove outer brackets and add combining mark pattern, then re-bracket
             inner = accent_class[1:-1]  # Remove [ and ]
             pattern_parts.append(f"[{inner}][̀-ͯ]*")
         elif char.isspace() or char == "-":
@@ -134,10 +134,8 @@ def _accent_tolerant_pattern(name: str) -> re.Pattern[str]:
             pattern_parts.append(r"[\s\-]+")
         else:
             # Regular character with optional combining marks
-            escaped = re.escape(char)
+            escaped = re.escape(stripped_char)
             pattern_parts.append(f"{escaped}[̀-ͯ]*")
-
-        i += 1
 
     pattern_str = "".join(pattern_parts)
     # Word boundaries: before must not be word char, after must not be word char
@@ -152,8 +150,8 @@ def _get_accent_class(char: str) -> str:
         "I": "[iíìïîIÍÌÏÎ]",
         "O": "[oóòöôõOÓÒÖÔÕ]",
         "U": "[uúùüûUÚÙÜÛ]",
-        "Ñ": "[nñNÑ]",
-        "C": "[cçCÇ]",
+        "N": "[nñNÑ]",  # Includes Ñ/ñ variants
+        "C": "[cçCÇ]",  # Includes Ç/ç variant
     }
     return classes.get(char, re.escape(char))
 
@@ -161,18 +159,15 @@ def _get_accent_class(char: str) -> str:
 def _extract_tokens(name: str) -> set[str]:
     """Extract individual tokens from a name (≥3 chars, excluding connectors).
 
-    Only extracts tokens before the first connector word to avoid scrubbing
-    words in patronymic/compound parts (e.g., "MARIA DE LOURDES" → only "MARIA").
+    Skips connector words but continues extraction after them
+    (e.g., "JUAN DE LA CRUZ" → {"JUAN", "CRUZ"}).
     """
     tokens = set()
     words = name.strip().split()
 
-    # Extract tokens only up to the first connector word
     for word in words:
-        if word.lower() in _CONNECTORS:
-            # Stop extraction at first connector
-            break
-        if len(word) >= 3:
+        # Skip connector words but continue extraction
+        if word.lower() not in _CONNECTORS and len(word) >= 3:
             tokens.add(_strip_accents(word.upper()))
 
     return tokens
