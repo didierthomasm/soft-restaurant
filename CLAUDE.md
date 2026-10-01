@@ -10,9 +10,10 @@ coding a stage:
   reconciliation figures, and `setup_employees.py` (configures the real employees
   through the API). Use it; never copy its contents into versioned files.
 
-Status: Stage 1 backend (Plan A) is done and accepted; the Stage 1 frontend (Plan B,
-`docs/plans/2026-09-29-etapa-1-plan-b-frontend.md`) is implemented (UI, unit tests, E2E,
-CI); acceptance with the manager is pending.
+Status: **Stage 1 (attendance) is closed** (2026-09-30): backend (Plan A) and frontend
+(Plan B, PR #3) merged with CI green. Next is Stage 2 (weekly review agent), which needs
+its design spec in `docs/specs/` before any code. Known Stage 1 follow-ups are listed in
+`docs/plan.md` §5.
 
 ## Backend layout (`backend/src/tabernas/`)
 
@@ -70,6 +71,16 @@ CI); acceptance with the manager is pending.
   (`POSTGRES_PASSWORD`, `DATABASE_URL`), and tests read `TEST_DATABASE_URL` from `.env`
   when it is not exported (CI exports it).
 - The default compose project's Postgres holds the real configuration: never `docker compose down -v` it or start it with `SR_MODE=fake`. Demo/E2E runs use `-p tabernas-demo`.
+- `npm run gen:api` reads the *running* backend: after backend changes, rebuild it first
+  (`docker compose up -d --build --wait backend`) or the generated types come out stale.
+- Frontend needs Node >= 24.15 (jsdom 30); locally it's Homebrew `node@24`.
+- shadcn/ui is on **Radix** (`frontend/components.json` style `radix-nova`); the CLI's
+  default is now Base UI, so never re-run `shadcn init` with defaults. `shadcn add` is fine.
+- `next dev` writes `frontend/AGENTS.md` and `frontend/CLAUDE.md` when it detects an AI
+  agent; both are gitignored (this file is the only CLAUDE.md).
+- `/auth/login` takes JSON `{user, password}`, not form data. Frontend dev reads
+  `frontend/.env.local` (copy `frontend/.env.example`); if the Docker frontend holds port
+  3000, run `npm run dev -- --port 3001`.
 
 ## Conventions
 
@@ -92,7 +103,7 @@ CI); acceptance with the manager is pending.
 - Check SR connectivity: `uv run --project backend scripts/check_connection.py`
 - Reconcile SR check-ins vs an SR export: `uv run --project backend scripts/reconcile_attendance.py --from YYYY-MM-DD --to YYYY-MM-DD --export db_examples/ASISTENCIA_EMPLEADOS.XLS`
 - Configure real employees and rest rules (private, idempotent): `python3 docs/private/setup_employees.py --dry-run`, then without `--dry-run`
-- Frontend dev (from `frontend/`, backend at :8000): `BACKEND_URL=http://127.0.0.1:8000 FAKE_AUTH_USER=demo FAKE_AUTH_PASSWORD=demo npm run dev`
+- Frontend dev (from `frontend/`, backend at :8000): `cp .env.example .env.local` once, then `npm run dev` (add `-- --port 3001` if the Docker frontend is up)
 - Frontend checks (from `frontend/`): `npm run lint && npm run typecheck && npm test`
 - Regenerate API types after backend changes (backend running): `npm run gen:api`
 - E2E (demo stack up and seeded): `npm run e2e`
