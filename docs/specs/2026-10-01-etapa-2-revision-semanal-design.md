@@ -1,6 +1,6 @@
 # Etapa 2 — Agente de revisión semanal: diseño
 
-> Estado: **aprobado** (2026-10-01; ajustes del 2026-10-01 al escribir el plan: loop manual en
+> Estado: **implementado** (2026-10-01; PR #6 backend y PR #7 frontend). Aprobado el 2026-10-01 (ajustes del 2026-10-01 al escribir el plan: loop manual en
 > vez del Tool Runner, sin APScheduler, umbrales en `/settings/review`). Deriva de [`plan.md`](../plan.md) §5 Etapa 2 y se
 > apoya en todo lo construido en la Etapa 1
 > ([`2026-09-29-etapa-1-asistencia-design.md`](2026-09-29-etapa-1-asistencia-design.md)).
