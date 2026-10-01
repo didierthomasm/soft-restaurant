@@ -8,6 +8,13 @@ UI text is in Spanish; code is in English.
 
 ## Commands (run from `frontend/`)
 
+Before starting local development, run `cp .env.example .env.local`. Next.js reads
+environment files in `frontend/`; the repository root `.env` is used by Docker
+Compose. The example configures the fake login as `demo` / `demo`.
+
+If the Docker frontend is already running on port 3000, use `npm run dev -- --port
+3001` and open http://localhost:3001 to avoid overlapping local and Docker servers.
+
 ```bash
 npm install
 npm run dev          # http://localhost:3000, needs the backend on BACKEND_URL
