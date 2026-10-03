@@ -45,8 +45,14 @@ export function IncidentFilters({ query, employees, onApply }: Props) {
         <Input id="hasta" name="hasta" type="date" defaultValue={query.to} required />
       </div>
       <div className="space-y-1">
+        {/* Remount when the options arrive: defaultValue only applies on mount. */}
         <Label htmlFor="empleado">Empleado</Label>
-        <NativeSelect id="empleado" name="empleado" defaultValue={query.employeeId ?? ""}>
+        <NativeSelect
+          key={employees.length}
+          id="empleado"
+          name="empleado"
+          defaultValue={query.employeeId ?? ""}
+        >
           <option value="">Todos</option>
           {employees.map((employee) => (
             <option key={employee.id} value={employee.id}>

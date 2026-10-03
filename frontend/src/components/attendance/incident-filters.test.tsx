@@ -47,4 +47,11 @@ describe("IncidentFilters", () => {
     await userEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
     expect(onApply).toHaveBeenCalledWith({ ...QUERY, page: 1, rhPage: 1 });
   });
+
+  it("selects the employee from the URL once the employee list arrives", () => {
+    const filtered = { ...QUERY, employeeId: 2 };
+    const { rerender } = render(<IncidentFilters query={filtered} employees={[]} onApply={() => undefined} />);
+    rerender(<IncidentFilters query={filtered} employees={employees} onApply={() => undefined} />);
+    expect(screen.getByLabelText("Empleado")).toHaveValue("2");
+  });
 });
