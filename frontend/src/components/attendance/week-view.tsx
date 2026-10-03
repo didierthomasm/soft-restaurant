@@ -6,15 +6,15 @@ import { ExportButton } from "@/components/export-button";
 import { Loading, QueryError } from "@/components/feedback";
 import { PeriodNav } from "@/components/period-nav";
 import { useCalendar } from "@/lib/api/attendance";
+import { type DayFocus, monthHref, weekHref } from "@/lib/calendar";
 import { addDays, formatDate, isoWeekNumber, weekStart } from "@/lib/dates";
 import { useEnsurePeriod } from "@/lib/period";
 
 import { DayPanel } from "./day-panel";
 import { Legend } from "./legend";
+import { ViewSwitch } from "./view-switch";
 import { WarningsList } from "./warnings-list";
 import { type DaySelection, findDaySelection, WeekGrid } from "./week-grid";
-
-export type DayFocus = { employeeId: number; day: string };
 
 export function WeekView({
   requestedStart,
@@ -23,7 +23,7 @@ export function WeekView({
   requestedStart: string | null;
   focus?: DayFocus | null;
 }) {
-  const buildQuery = useCallback((today: string) => `desde=${weekStart(today)}`, []);
+  const buildQuery = useCallback((today: string) => `vista=semana&desde=${weekStart(today)}`, []);
   useEnsurePeriod(requestedStart, buildQuery);
   if (requestedStart === null) return <Loading />;
   return <Week from={weekStart(requestedStart)} focus={focus} />;
@@ -45,11 +45,14 @@ function Week({ from, focus }: { from: string; focus: DayFocus | null }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <PeriodNav
-          label={`Semana ${isoWeekNumber(from)} · ${formatDate(from)} – ${formatDate(to)}`}
-          previousHref={`/semana?desde=${addDays(from, -7)}`}
-          nextHref={`/semana?desde=${addDays(from, 7)}`}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <ViewSwitch view="semana" weekHref={weekHref(from)} monthHref={monthHref(from.slice(0, 7))} />
+          <PeriodNav
+            label={`Semana ${isoWeekNumber(from)} · ${formatDate(from)} – ${formatDate(to)}`}
+            previousHref={weekHref(addDays(from, -7))}
+            nextHref={weekHref(addDays(from, 7))}
+          />
+        </div>
         <ExportButton from={from} to={to} group="week" />
       </div>
       {calendar.isPending && <Loading />}

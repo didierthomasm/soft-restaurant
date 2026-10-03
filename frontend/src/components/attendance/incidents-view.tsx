@@ -1,64 +1,47 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { ExportButton } from "@/components/export-button";
 import { Loading, QueryError } from "@/components/feedback";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useIncidents } from "@/lib/api/attendance";
+import { fetchAllRhRows, useIncidents, useRhRows } from "@/lib/api/attendance";
 import { useEmployees } from "@/lib/api/config";
 import type { DayOut, EmployeeRef } from "@/lib/api/types";
-import { addDays, formatDay, formatTime, weekStart } from "@/lib/dates";
-import { OUTCOME_LABELS, RH_LABELS, incidentFor } from "@/lib/labels";
+import { addDays, weekStart } from "@/lib/dates";
+import {
+  type IncidentQuery,
+  incidentQueryString,
+  toApiParams,
+  withFilters,
+} from "@/lib/incident-query";
 import { useEnsurePeriod } from "@/lib/period";
 
 import { DayPanel } from "./day-panel";
+import { IncidentFilters } from "./incident-filters";
+import { IncidentTable } from "./incident-table";
 import { RhTable } from "./rh-table";
 import { WarningsList } from "./warnings-list";
 import type { DaySelection } from "./week-grid";
 
-type Props = { from: string | null; to: string | null };
-
-export function IncidentsView({ from, to }: Props) {
+export function IncidentsView({ query }: { query: IncidentQuery | null }) {
   const buildQuery = useCallback((today: string) => {
     const start = weekStart(today);
     return `desde=${start}&hasta=${addDays(start, 6)}`;
   }, []);
-  useEnsurePeriod(from && to ? from : null, buildQuery);
-  if (!from || !to) return <Loading />;
-  return <Incidents from={from} to={to} />;
+  useEnsurePeriod(query ? query.from : null, buildQuery);
+  if (!query) return <Loading />;
+  return <Incidents query={query} />;
 }
 
-function RangeForm({ from, to }: { from: string; to: string }) {
+function Incidents({ query }: { query: IncidentQuery }) {
   const router = useRouter();
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    router.push(`/incidencias?desde=${form.get("desde")}&hasta=${form.get("hasta")}`);
-  }
-  return (
-    <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
-      <div className="space-y-1">
-        <Label htmlFor="desde">Desde</Label>
-        <Input id="desde" name="desde" type="date" defaultValue={from} required />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="hasta">Hasta</Label>
-        <Input id="hasta" name="hasta" type="date" defaultValue={to} required />
-      </div>
-      <Button type="submit" variant="outline">
-        Ver
-      </Button>
-    </form>
-  );
-}
-
-function Incidents({ from, to }: { from: string; to: string }) {
-  const incidents = useIncidents(from, to);
+  const go = (next: IncidentQuery) =>
+    router.push(`/incidencias?${incidentQueryString(next)}`, { scroll: false });
+  const incidents = useIncidents(toApiParams(query, query.page));
+  const rhRows = useRhRows(toApiParams(query, query.rhPage));
   const employees = useEmployees();
   const [selection, setSelection] = useState<DaySelection | null>(null);
   const byId = new Map<number, EmployeeRef>((employees.data ?? []).map((e) => [e.id, e]));
@@ -66,99 +49,63 @@ function Incidents({ from, to }: { from: string; to: string }) {
     const employee = byId.get(day.employee_id);
     if (employee) setSelection({ day, employee });
   };
-  const unresolved = incidents.data?.incidents.filter((d) => d.outcome === "UNREGISTERED_CHANGE") ?? [];
+  const unresolved = incidents.data?.data.unresolved ?? 0;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <RangeForm from={from} to={to} />
-        <ExportButton from={from} to={to} group="week" />
+        <IncidentFilters
+          key={incidentQueryString(query)}
+          query={query}
+          employees={(employees.data ?? []).filter((e) => e.active)}
+          onApply={go}
+        />
+        <ExportButton from={query.from} to={query.to} group="week" />
       </div>
-      {incidents.isPending && <Loading />}
-      {incidents.isError && <QueryError error={incidents.error} onRetry={() => incidents.refetch()} />}
-      {incidents.data && (
-        <>
-          <WarningsList warnings={incidents.data.warnings} />
-          <section className="space-y-2">
-            <h2 className="text-lg font-semibold">Para capturar en RH</h2>
-            <RhTable rows={incidents.data.rh_rows} />
-          </section>
-          {unresolved.length > 0 && (
-            <section className="space-y-2">
-              <h2 className="text-lg font-semibold">Pendientes de resolver</h2>
-              <IncidentTable days={unresolved} byId={byId} onSelect={select} />
-            </section>
-          )}
-          <section className="space-y-2">
-            <h2 className="text-lg font-semibold">Todas las incidencias</h2>
-            <IncidentTable days={incidents.data.incidents} byId={byId} onSelect={select} />
-          </section>
-        </>
+      {incidents.data && <WarningsList warnings={incidents.data.data.warnings} />}
+      {unresolved > 0 && (
+        <p role="status" className="flex items-center gap-2 text-sm">
+          {unresolved} {unresolved === 1 ? "cambio sin registrar" : "cambios sin registrar"}
+          <Button
+            size="sm"
+            variant="link"
+            onClick={() => go(withFilters(query, { types: ["UNREGISTERED_CHANGE"], status: "all" }))}
+          >
+            Ver
+          </Button>
+        </p>
       )}
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">Para capturar en RH</h2>
+        {rhRows.isPending && <Loading />}
+        {rhRows.isError && <QueryError error={rhRows.error} onRetry={() => rhRows.refetch()} />}
+        {rhRows.data && (
+          <>
+            <RhTable rows={rhRows.data.data.items} loadAll={() => fetchAllRhRows(query)} />
+            <Pagination
+              meta={rhRows.data.page}
+              label="Páginas de RH"
+              onPage={(rhPage) => go({ ...query, rhPage })}
+            />
+          </>
+        )}
+      </section>
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">Todas las incidencias</h2>
+        {incidents.isPending && <Loading />}
+        {incidents.isError && <QueryError error={incidents.error} onRetry={() => incidents.refetch()} />}
+        {incidents.data && (
+          <>
+            <IncidentTable days={incidents.data.data.items} byId={byId} onSelect={select} />
+            <Pagination
+              meta={incidents.data.page}
+              label="Páginas de incidencias"
+              onPage={(page) => go({ ...query, page })}
+            />
+          </>
+        )}
+      </section>
       <DayPanel selection={selection} onClose={() => setSelection(null)} />
     </div>
-  );
-}
-
-type TableProps = {
-  days: DayOut[];
-  byId: Map<number, EmployeeRef>;
-  onSelect: (day: DayOut) => void;
-};
-
-function IncidentTable({ days, byId, onSelect }: TableProps) {
-  if (days.length === 0) return <p className="text-sm text-muted-foreground">Sin incidencias.</p>;
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Empleado</TableHead>
-          <TableHead>Día</TableHead>
-          <TableHead>Resultado</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>
-            <span className="sr-only">Acciones</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {days.map((day) => (
-          <IncidentRow key={`${day.employee_id}-${day.day}`} day={day} byId={byId} onSelect={onSelect} />
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-
-function IncidentRow({ day, byId, onSelect }: { day: DayOut } & Omit<TableProps, "days">) {
-  const justifiable = incidentFor(day.outcome) !== null && day.justification_id === null;
-  const justified = incidentFor(day.outcome) !== null && day.justification_id !== null;
-  const action = justifiable
-    ? "Justificar"
-    : justified
-      ? "Editar"
-      : day.outcome === "UNREGISTERED_CHANGE"
-        ? "Resolver"
-        : null;
-  const status =
-    day.justification_id !== null || day.outcome === "JUSTIFIED"
-      ? `Justificada${day.rh_type ? ` · ${RH_LABELS[day.rh_type]}` : ""}`
-      : "Sin justificar";
-  return (
-    <TableRow>
-      <TableCell>{byId.get(day.employee_id)?.short_name ?? day.employee_id}</TableCell>
-      <TableCell>{formatDay(day.day)}</TableCell>
-      <TableCell>
-        {OUTCOME_LABELS[day.outcome]} {formatTime(day.checkin)}
-      </TableCell>
-      <TableCell>{status}</TableCell>
-      <TableCell className="text-right">
-        {action && (
-          <Button size="sm" variant="outline" onClick={() => onSelect(day)}>
-            {action}
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
   );
 }

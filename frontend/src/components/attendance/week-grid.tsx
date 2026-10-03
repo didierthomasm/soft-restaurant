@@ -64,12 +64,14 @@ function DayCell({ day, onClick }: { day: DayOut; onClick: () => void }) {
   const label = OUTCOME_LABELS[day.outcome];
   const time = formatTime(day.checkin);
   const justified = day.justification_id !== null;
+  const changed = day.exception !== null && day.outcome !== "JUSTIFIED";
+  const notes = [justified && "justificado", changed && "excepción"].filter(Boolean).join(", ");
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={day.outcome === "FUTURE"}
-      aria-label={`${formatDay(day.day)}: ${label}${time ? ` ${time}` : ""}${justified ? " (justificado)" : ""}`}
+      aria-label={`${formatDay(day.day)}: ${label}${time ? ` ${time}` : ""}${notes ? ` (${notes})` : ""}`}
       className={cn(
         "flex h-14 w-full flex-col items-center justify-center rounded-md text-xs",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
@@ -79,6 +81,7 @@ function DayCell({ day, onClick }: { day: DayOut; onClick: () => void }) {
       <span className="font-medium">{label}</span>
       {time && <span>{time}</span>}
       {justified && <span className="text-[10px]">Justificado</span>}
+      {changed && <span className="text-[10px]">Excepción</span>}
     </button>
   );
 }

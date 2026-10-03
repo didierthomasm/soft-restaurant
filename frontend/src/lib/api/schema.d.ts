@@ -303,6 +303,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/rh-rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rh Rows */
+        get: operations["rh_rows_attendance_rh_rows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attendance/summary": {
         parameters: {
             query?: never;
@@ -437,6 +454,7 @@ export interface components {
             justification_id: number | null;
             /** Comment */
             comment: string;
+            exception: components["schemas"]["ExceptionRef"] | null;
         };
         /** EmployeeCreate */
         EmployeeCreate: {
@@ -623,6 +641,17 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** Envelope[RhRowsOut] */
+        Envelope_RhRowsOut_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["RhRowsOut"] | null;
+            error?: components["schemas"]["ErrorBody"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** Envelope[SettingsBody] */
         Envelope_SettingsBody_: {
             /** Success */
@@ -784,6 +813,25 @@ export interface components {
             /** Comment */
             comment: string;
         };
+        /** ExceptionRef */
+        ExceptionRef: {
+            /** Id */
+            id: number;
+            kind: components["schemas"]["ExceptionKind"];
+            /**
+             * Date From
+             * Format: date
+             */
+            date_from: string;
+            /**
+             * Date To
+             * Format: date
+             */
+            date_to: string;
+            rh_type: components["schemas"]["RhType"] | null;
+            /** Comment */
+            comment: string;
+        };
         /** ExceptionUpdate */
         ExceptionUpdate: {
             /** Date From */
@@ -843,6 +891,17 @@ export interface components {
          * @enum {string}
          */
         Incident: "LATE" | "ABSENT";
+        /**
+         * IncidentStatus
+         * @enum {string}
+         */
+        IncidentStatus: "all" | "justified" | "unjustified";
+        /**
+         * IncidentType
+         * @description The outcomes that count as incidents (same values as `Outcome`).
+         * @enum {string}
+         */
+        IncidentType: "LATE" | "ABSENT" | "UNREGISTERED_CHANGE" | "JUSTIFIED";
         /** IncidentsOut */
         IncidentsOut: {
             /**
@@ -855,10 +914,10 @@ export interface components {
              * Format: date
              */
             end: string;
-            /** Incidents */
-            incidents: components["schemas"]["DayOut"][];
-            /** Rh Rows */
-            rh_rows: components["schemas"]["RhRowOut"][];
+            /** Items */
+            items: components["schemas"]["DayOut"][];
+            /** Unresolved */
+            unresolved: number;
             /** Warnings */
             warnings: components["schemas"]["WarningOut"][];
         };
@@ -1118,6 +1177,21 @@ export interface components {
             rh_type: components["schemas"]["RhType"];
             /** Comment */
             comment: string;
+        };
+        /** RhRowsOut */
+        RhRowsOut: {
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /** Items */
+            items: components["schemas"]["RhRowOut"][];
         };
         /**
          * RhType
@@ -2032,6 +2106,11 @@ export interface operations {
             query: {
                 from: string;
                 to: string;
+                employee_id?: number | null;
+                type?: components["schemas"]["IncidentType"][] | null;
+                status?: components["schemas"]["IncidentStatus"];
+                page?: number;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -2046,6 +2125,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_IncidentsOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rh_rows_attendance_rh_rows_get: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                employee_id?: number | null;
+                type?: components["schemas"]["IncidentType"][] | null;
+                status?: components["schemas"]["IncidentStatus"];
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RhRowsOut_"];
                 };
             };
             /** @description Validation Error */

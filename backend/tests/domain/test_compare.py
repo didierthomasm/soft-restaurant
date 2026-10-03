@@ -8,13 +8,14 @@ from tabernas.domain.types import (
     Checkin,
     DayResult,
     Employee,
+    ExceptionKind,
     Outcome,
     Planned,
     PlannedDay,
     RhType,
     WarningCode,
 )
-from tests.domain.factories import employee, planned
+from tests.domain.factories import employee, exception, planned
 
 DAY = date(2026, 9, 23)  # Wednesday
 EVENING = datetime(2026, 9, 27, 20, 0)
@@ -183,3 +184,17 @@ def test_employee_without_sr_id_that_does_not_track_attendance_is_not_warned() -
         EVENING,
     )
     assert warnings == []
+
+
+def test_result_keeps_the_planned_exception() -> None:
+    absence = exception(ExceptionKind.WORK_TO_ABSENCE, DAY, rh_type=RhType.VACACIONES)
+    day_plan = replace(planned(DAY, Planned.ABSENCE, rh_type=RhType.VACACIONES), exception=absence)
+    result = run_one(day_plan, [])
+    assert (result.outcome, result.exception) == (Outcome.JUSTIFIED, absence)
+
+
+def test_late_result_keeps_a_present_no_checkin_exception() -> None:
+    present = exception(ExceptionKind.PRESENT_NO_CHECKIN, DAY)
+    day_plan = replace(planned(DAY, present_no_checkin=True), exception=present)
+    result = run_one(day_plan, [checkin(17, 5)])
+    assert (result.outcome, result.exception) == (Outcome.LATE, present)

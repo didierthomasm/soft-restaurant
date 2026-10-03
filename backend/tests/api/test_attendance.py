@@ -1,5 +1,6 @@
 from datetime import date
 from io import BytesIO
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,12 +33,113 @@ def test_calendar_has_one_day_per_employee(demo_client: TestClient) -> None:
     assert not {w["code"] for w in data["warnings"]} & {"NO_REST_RULE", "UNMAPPED_CHECKIN"}
 
 
+def test_calendar_days_carry_their_exception(demo_client: TestClient) -> None:
+    employee_id = demo_client.get("/employees").json()["data"][0]["id"]
+    body = {
+        "kind": "WORK_TO_ABSENCE",
+        "employee_id": employee_id,
+        "date_from": "2026-09-23",
+        "date_to": "2026-09-24",
+        "rh_type": "VACACIONES",
+        "comment": "Viaje",
+    }
+    created = demo_client.post("/exceptions", json=body).json()["data"]
+    days = demo_client.get("/attendance/calendar", params=WEEK).json()["data"]["days"]
+    own = {d["day"]: d for d in days if d["employee_id"] == employee_id}
+    expected = {k: created[k] for k in ("id", "kind", "date_from", "date_to", "rh_type", "comment")}
+    assert own["2026-09-23"]["exception"] == expected
+    assert own["2026-09-24"]["exception"] == expected
+    assert own["2026-09-21"]["exception"] is None
+
+
+MONTH = {"from": "2026-09-01", "to": "2026-09-27"}
+
+
+def _items(client: TestClient, path: str, **params: str | int | list[str]) -> list[dict[str, Any]]:
+    response = client.get(path, params={**MONTH, "limit": 100, **params})
+    assert response.status_code == 200, response.text
+    return response.json()["data"]["items"]
+
+
 def test_incidents_and_rh_rows_are_consistent(demo_client: TestClient) -> None:
-    data = demo_client.get("/attendance/incidents", params=WEEK).json()["data"]
-    assert {d["outcome"] for d in data["incidents"]} <= INCIDENT_OUTCOMES
-    incident_keys = {(d["employee_id"], d["day"]) for d in data["incidents"]}
-    assert data["rh_rows"]
-    assert {(r["employee_id"], r["day"]) for r in data["rh_rows"]} <= incident_keys
+    incidents = _items(demo_client, "/attendance/incidents")
+    rows = _items(demo_client, "/attendance/rh-rows")
+    assert {d["outcome"] for d in incidents} <= INCIDENT_OUTCOMES
+    assert rows
+    assert {(r["employee_id"], r["day"]) for r in rows} <= {
+        (d["employee_id"], d["day"]) for d in incidents
+    }
+
+
+def test_incidents_are_paginated_with_meta(demo_client: TestClient) -> None:
+    first = demo_client.get("/attendance/incidents", params={**MONTH, "limit": 5}).json()
+    total = first["meta"]["total"]
+    assert (first["meta"]["page"], first["meta"]["limit"]) == (1, 5)
+    assert total > 5
+    assert len(first["data"]["items"]) == 5
+    last_page = (total + 4) // 5
+    last = demo_client.get(
+        "/attendance/incidents", params={**MONTH, "limit": 5, "page": last_page}
+    ).json()
+    assert len(last["data"]["items"]) == total - 5 * (last_page - 1)
+    beyond = demo_client.get(
+        "/attendance/incidents", params={**MONTH, "limit": 5, "page": last_page + 1}
+    ).json()
+    assert (beyond["data"]["items"], beyond["meta"]["total"]) == ([], total)
+
+
+def test_incident_filters_combine(demo_client: TestClient) -> None:
+    every = _items(demo_client, "/attendance/incidents")
+    employee_id = every[0]["employee_id"]
+    found = _items(
+        demo_client,
+        "/attendance/incidents",
+        employee_id=employee_id,
+        type=["LATE", "ABSENT"],
+        status="unjustified",
+    )
+    assert found == [
+        d
+        for d in every
+        if d["employee_id"] == employee_id
+        and d["outcome"] in {"LATE", "ABSENT"}
+        and d["justification_id"] is None
+    ]
+
+
+def test_unresolved_ignores_type_and_status(demo_client: TestClient) -> None:
+    every = _items(demo_client, "/attendance/incidents")
+    changes = sum(d["outcome"] == "UNREGISTERED_CHANGE" for d in every)
+    params = {**MONTH, "type": "LATE", "status": "justified"}
+    data = demo_client.get("/attendance/incidents", params=params).json()["data"]
+    assert data["unresolved"] == changes
+
+
+def test_rh_rows_follow_the_incident_filters(demo_client: TestClient) -> None:
+    every = _items(demo_client, "/attendance/rh-rows")
+    employee_id = every[0]["employee_id"]
+    assert _items(demo_client, "/attendance/rh-rows", employee_id=employee_id) == [
+        r for r in every if r["employee_id"] == employee_id
+    ]
+    assert {r["rh_type"] for r in _items(demo_client, "/attendance/rh-rows", type="LATE")} <= {
+        "RETARDO"
+    }
+    assert _items(demo_client, "/attendance/rh-rows", type="UNREGISTERED_CHANGE") == []
+
+
+def test_rh_rows_are_paginated(demo_client: TestClient) -> None:
+    every = _items(demo_client, "/attendance/rh-rows")
+    page = demo_client.get("/attendance/rh-rows", params={**MONTH, "limit": 2}).json()
+    assert page["data"]["items"] == every[:2]
+    assert page["meta"] == {"total": len(every), "page": 1, "limit": 2}
+
+
+@pytest.mark.parametrize(
+    "bad", [{"limit": 101}, {"limit": 0}, {"page": 0}, {"type": "OK"}, {"status": "todas"}]
+)
+def test_bad_incident_queries_are_422(client: TestClient, bad: dict[str, str | int]) -> None:
+    for path in ("/attendance/incidents", "/attendance/rh-rows"):
+        assert client.get(path, params={**WEEK, **bad}).status_code == 422
 
 
 def test_monthly_summary(demo_client: TestClient) -> None:

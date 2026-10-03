@@ -15,7 +15,11 @@ Status: **Stage 1 (attendance) is closed** (2026-09-30): backend (Plan A) and fr
 (2026-10-01): backend (Plan A, PR #6) and frontend (Plan B, PR #7) merged with CI green;
 spec in `docs/specs/2026-10-01-etapa-2-revision-semanal-design.md`, plans in
 `docs/plans/2026-10-01-etapa-2-plan-{a-backend,b-frontend}.md`. Known follow-ups of both
-stages are listed in `docs/plan.md` §5.
+stages are listed in `docs/plan.md` §5. **Attendance improvements** (2026-10-03): exception
+editing from the day panel, API-side filters and pagination for incidents
+(`/attendance/incidents`, `/attendance/rh-rows`), Calendario (week/month) and Resumen tabs;
+spec `docs/specs/2026-10-03-asistencia-mejoras-design.md`, plans
+`docs/plans/2026-10-03-asistencia-mejoras-plan-{a-backend,b-frontend}.md`.
 
 ## Backend layout (`backend/src/tabernas/`)
 
@@ -27,6 +31,7 @@ stages are listed in `docs/plan.md` §5.
 - `services/attendance.py` — the only place that joins Postgres config, SR and the domain.
 - `api/` — thin routers, response envelope `{success, data, error, meta}`, error mapping.
 - `export/` — Excel workbook (Spanish labels).
+- `domain/incident_filter.py` — pure filters and pagination of the incident list.
 - `domain/review*.py` — weekly-review findings (`review.py`), types and the Thu 17:30 /
   Mon 09:00 schedule slots; pure, like the rest of `domain/`.
 - `agents/` — Claude agents. `pseudonyms.py`: Claude only ever sees `E{id}`.
@@ -48,8 +53,11 @@ stages are listed in `docs/plan.md` §5.
 - `lib/api/reviews.ts` — weekly-review hooks; drafts poll every 3 s only while `QUEUED`
   or `RUNNING`. `lib/review.ts` holds the review labels and pure helpers.
 - `components/review/` — `/revision`: the latest draft of a week (summary, findings by
-  priority with links to `/semana?desde&empleado&dia`, RH list, approve).
+  priority with links to `/calendario?vista=semana&desde&empleado&dia`, RH list, approve).
 - `lib/*.ts` — pure utilities (dates, labels, TSV, period) with Vitest tests.
+  `incident-query.ts`: Incidencias filters ⇄ URL; `calendar.ts`: calendar/summary hrefs
+  and the legacy `/semana`, `/mes` redirects; `pages.ts`: page windows and fetching every
+  page (RH copy).
 - `components/` are presentational; `app/` pages orchestrate them. The browser only
   calls `/backend/...`, never the API directly.
 

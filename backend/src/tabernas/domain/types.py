@@ -137,6 +137,7 @@ class PlannedDay:
     present_no_checkin: bool = False
     manual_absence: bool = False
     comment: str = ""
+    exception: ScheduleException | None = None
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,7 @@ class DayResult:
     rh_type: RhType | None = None
     justification_id: int | None = None
     comment: str = ""
+    exception: ScheduleException | None = None
 
 
 @dataclass(frozen=True)

@@ -7,25 +7,32 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { RhRowOut } from "@/lib/api/types";
 import { formatDate } from "@/lib/dates";
 import { RH_LABELS } from "@/lib/labels";
+import { copyText } from "@/lib/clipboard";
 import { rhRowsToTsv } from "@/lib/tsv";
 
-export function RhTable({ rows }: { rows: RhRowOut[] }) {
+type Props = { rows: RhRowOut[]; loadAll?: () => Promise<RhRowOut[]> };
+
+export function RhTable({ rows, loadAll }: Props) {
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground">Sin incidencias para capturar en RH.</p>;
   }
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(rhRowsToTsv(rows));
-      toast.success("Lista copiada");
-    } catch {
-      toast.error("No se pudo copiar; selecciona la tabla manualmente");
-    }
+  function copy() {
+    const all = loadAll ? loadAll() : Promise.resolve(rows);
+    copyText(all.then(rhRowsToTsv))
+      .then(() => all)
+      .then((copied) => toast.success(`Lista copiada (${copied.length} filas)`))
+      .catch(() => toast.error("No se pudo copiar la lista; intenta de nuevo"));
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {loadAll && (
+          <span className="text-xs text-muted-foreground">
+            Copia todas las filas del filtro, no solo esta página.
+          </span>
+        )}
         <Button variant="outline" onClick={copy}>
           Copiar para RH
         </Button>

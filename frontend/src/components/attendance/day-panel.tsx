@@ -10,6 +10,7 @@ import {
 import { formatDay, formatTime } from "@/lib/dates";
 import { OUTCOME_LABELS, RH_LABELS, incidentFor } from "@/lib/labels";
 
+import { ExceptionEdit } from "./exception-edit";
 import { ExceptionForm } from "./exception-form";
 import { JustificationEdit } from "./justification-edit";
 import { JustifyForm } from "./justify-form";
@@ -39,7 +40,10 @@ function describe({ day }: DaySelection): string {
 function DayDetail({ selection, onDone }: { selection: DaySelection; onDone: () => void }) {
   const { day, employee } = selection;
   const incident = incidentFor(day.outcome);
-  const canSwap = day.outcome === "ABSENT" || day.outcome === "UNREGISTERED_CHANGE";
+  const exception = day.exception;
+  const canSwap =
+    exception === null && (day.outcome === "ABSENT" || day.outcome === "UNREGISTERED_CHANGE");
+  const looseComment = day.comment && day.justification_id === null && exception === null;
   return (
     <>
       <SheetHeader>
@@ -49,7 +53,7 @@ function DayDetail({ selection, onDone }: { selection: DaySelection; onDone: () 
         <SheetDescription>{describe(selection)}</SheetDescription>
       </SheetHeader>
       <div className="space-y-8 p-4">
-        {day.comment && day.justification_id === null && <p className="text-sm">{day.comment}</p>}
+        {looseComment && <p className="text-sm">{day.comment}</p>}
         {incident && day.justification_id === null && (
           <JustifyForm employeeId={employee.id} day={day.day} incident={incident} onDone={onDone} />
         )}
@@ -62,8 +66,11 @@ function DayDetail({ selection, onDone }: { selection: DaySelection; onDone: () 
             onDone={onDone}
           />
         )}
+        {exception && (
+          <ExceptionEdit key={`${exception.id}-${day.day}`} exception={exception} onDone={onDone} />
+        )}
         {canSwap && <RestSwapForm employeeId={employee.id} day={day} onDone={onDone} />}
-        <ExceptionForm employeeId={employee.id} day={day.day} onDone={onDone} />
+        {exception === null && <ExceptionForm employeeId={employee.id} day={day.day} onDone={onDone} />}
       </div>
     </>
   );

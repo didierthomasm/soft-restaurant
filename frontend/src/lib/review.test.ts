@@ -81,11 +81,11 @@ describe("review helpers", () => {
 
   it("links a finding to its day panel inside the reviewed week", () => {
     expect(actionHref(finding({}), MONDAY)).toBe(
-      "/semana?desde=2026-09-21&empleado=7&dia=2026-09-23",
+      "/calendario?vista=semana&desde=2026-09-21&empleado=7&dia=2026-09-23",
     );
     // Review Focus #1: a streak that began last week opens a day of this week.
     const streak = finding({ kind: "NO_CHECKIN_STREAK", days: ["2026-09-20", "2026-09-21"] });
-    expect(actionHref(streak, MONDAY)).toBe("/semana?desde=2026-09-21&empleado=7&dia=2026-09-21");
+    expect(actionHref(streak, MONDAY)).toBe("/calendario?vista=semana&desde=2026-09-21&empleado=7&dia=2026-09-21");
     expect(actionHref(finding({ kind: "CONFIG_WARNING", employee_id: null, days: [] }), MONDAY)).toBe(
       "/configuracion",
     );

@@ -23,8 +23,8 @@ test("generate, read and approve the weekly draft", async ({ page }) => {
   await expect(page.getByText(/Borrador de demostración/)).toBeVisible({ timeout: 45_000 });
   await expect(page.getByRole("heading", { name: "Lista para RH" })).toBeVisible();
 
-  // Deep link: a finding action opens the day panel on /semana.
-  const link = page.locator('a[href^="/semana?"]').first();
+  // Deep link: a finding action opens the day panel on /calendario.
+  const link = page.locator('a[href^="/calendario?"]').first();
   await expect(link).toBeVisible();
   const href = await link.getAttribute("href");
   expect(href).toMatch(/empleado=\d+/);

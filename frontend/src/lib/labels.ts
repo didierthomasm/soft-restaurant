@@ -1,4 +1,13 @@
-import type { ExceptionKind, Incident, Outcome, RhType, WarningCode } from "@/lib/api/types";
+import type {
+  DayOut,
+  ExceptionKind,
+  Incident,
+  IncidentStatus,
+  IncidentType,
+  Outcome,
+  RhType,
+  WarningCode,
+} from "@/lib/api/types";
 
 export const OUTCOME_LABELS: Record<Outcome, string> = {
   OK: "A tiempo",
@@ -22,6 +31,18 @@ export const OUTCOME_STYLES: Record<Outcome, string> = {
   JUSTIFIED: "bg-sky-100 text-sky-950",
   PENDING: "border border-dashed text-muted-foreground",
   FUTURE: "text-muted-foreground",
+};
+
+export const OUTCOME_SHORT: Record<Outcome, string> = {
+  OK: "A",
+  LATE: "R",
+  ABSENT: "F",
+  UNREGISTERED_CHANGE: "C",
+  REST: "D",
+  CLOSED: "X",
+  JUSTIFIED: "J",
+  PENDING: "P",
+  FUTURE: "",
 };
 
 export const RH_LABELS: Record<RhType, string> = {
@@ -71,5 +92,21 @@ export const JUSTIFICATION_RH_TYPES: Record<Incident, RhType[]> = {
 export function incidentFor(outcome: Outcome): Incident | null {
   if (outcome === "LATE") return "LATE";
   if (outcome === "ABSENT") return "ABSENT";
+  return null;
+}
+
+export const INCIDENT_TYPES: IncidentType[] = ["LATE", "ABSENT", "UNREGISTERED_CHANGE", "JUSTIFIED"];
+
+export const STATUS_LABELS: Record<IncidentStatus, string> = {
+  all: "Todas",
+  justified: "Justificadas",
+  unjustified: "Sin justificar",
+};
+
+export function incidentAction(day: DayOut): "Justificar" | "Editar" | "Resolver" | null {
+  const incident = incidentFor(day.outcome);
+  if (incident && day.justification_id === null) return "Justificar";
+  if (incident || day.outcome === "JUSTIFIED") return "Editar";
+  if (day.outcome === "UNREGISTERED_CHANGE") return "Resolver";
   return null;
 }

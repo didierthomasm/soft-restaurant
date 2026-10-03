@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/semana", label: "Semana" },
+  { href: "/calendario", label: "Calendario" },
   { href: "/incidencias", label: "Incidencias" },
   { href: "/revision", label: "Revisión" },
-  { href: "/mes", label: "Mes" },
+  { href: "/resumen", label: "Resumen" },
   { href: "/configuracion", label: "Configuración" },
 ] as const;
 

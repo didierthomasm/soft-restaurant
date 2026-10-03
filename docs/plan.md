@@ -137,9 +137,11 @@ freetds.conf
 > frontend (1f) terminado (Plan B: UI, pruebas unitarias, E2E y CI; PR #3 con CI en
 > verde).
 >
+> Mejoras de uso (2026-10-03): editar excepciones desde el día, filtros y paginación
+> en Incidencias, calendario mensual y pestaña Resumen
+> ([spec](specs/2026-10-03-asistencia-mejoras-design.md)).
+>
 > Pendientes conocidos (no bloquean; se retoman cuando haga falta):
-> - `DayOut` no indica si un día viene de una excepción, así que la celda de la semana
->   solo marca justificaciones (§9 del spec pide ambas). Requiere un campo en el backend.
 > - Mejoras menores de UI: validaciones del lado del cliente en formularios (rango de
 >   fechas, ancla en lunes), más pruebas de componentes y detalles de accesibilidad.
 > - La exportación a Excel es un enlace directo: si el backend responde con error, el

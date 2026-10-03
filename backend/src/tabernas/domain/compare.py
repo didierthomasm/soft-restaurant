@@ -70,6 +70,7 @@ def _evaluate(
         checkin=checkin,
         rh_type=day_plan.rh_type,
         comment=day_plan.comment,
+        exception=day_plan.exception,
     )
     if day_plan.day > today:
         return replace(base, outcome=Outcome.FUTURE)

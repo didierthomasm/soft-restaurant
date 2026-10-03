@@ -6,7 +6,7 @@
 export const SESSION_COOKIE = "tc_session";
 export const SESSION_VALUE = "fake-session";
 export const SESSION_MAX_AGE_S = 60 * 60 * 12;
-const DEFAULT_AFTER_LOGIN = "/semana";
+const DEFAULT_AFTER_LOGIN = "/calendario";
 
 type Env = Record<string, string | undefined>;
 

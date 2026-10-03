@@ -4,10 +4,13 @@ import {
   addDays,
   daysBetween,
   formatDate,
-  formatDay,
   formatDateTime,
+  formatDay,
+  formatMonth,
   formatTime,
   isIsoDate,
+  isIsoMonth,
+  isWeekend,
   isoWeekMonday,
   isoWeekNumber,
   isoWeekYear,
@@ -79,5 +82,24 @@ describe("dates", () => {
   it("formats naive backend datetimes", () => {
     expect(formatDateTime("2026-09-24T17:30:00")).toBe("24/09/2026 17:30");
     expect(formatDateTime(null)).toBe("");
+  });
+});
+
+describe("month helpers", () => {
+  it("validates YYYY-MM", () => {
+    expect(isIsoMonth("2026-09")).toBe(true);
+    expect(isIsoMonth("2026-13")).toBe(false);
+    expect(isIsoMonth("2026-9")).toBe(false);
+    expect(isIsoMonth(undefined)).toBe(false);
+  });
+
+  it("formats a month in Spanish", () => {
+    expect(formatMonth("2026-09")).toBe("septiembre 2026");
+  });
+
+  it("detects weekends", () => {
+    expect(isWeekend("2026-09-26")).toBe(true); // Saturday
+    expect(isWeekend("2026-09-27")).toBe(true); // Sunday
+    expect(isWeekend("2026-09-28")).toBe(false); // Monday
   });
 });
