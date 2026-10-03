@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { RhRowOut } from "@/lib/api/types";
 import { formatDate } from "@/lib/dates";
 import { RH_LABELS } from "@/lib/labels";
+import { copyText } from "@/lib/clipboard";
 import { rhRowsToTsv } from "@/lib/tsv";
 
 type Props = { rows: RhRowOut[]; loadAll?: () => Promise<RhRowOut[]> };
@@ -16,14 +17,12 @@ export function RhTable({ rows, loadAll }: Props) {
     return <p className="text-sm text-muted-foreground">Sin incidencias para capturar en RH.</p>;
   }
 
-  async function copy() {
-    try {
-      const all = loadAll ? await loadAll() : rows;
-      await navigator.clipboard.writeText(rhRowsToTsv(all));
-      toast.success(`Lista copiada (${all.length} filas)`);
-    } catch {
-      toast.error("No se pudo copiar; selecciona la tabla manualmente");
-    }
+  function copy() {
+    const all = loadAll ? loadAll() : Promise.resolve(rows);
+    copyText(all.then(rhRowsToTsv))
+      .then(() => all)
+      .then((copied) => toast.success(`Lista copiada (${copied.length} filas)`))
+      .catch(() => toast.error("No se pudo copiar la lista; intenta de nuevo"));
   }
 
   return (

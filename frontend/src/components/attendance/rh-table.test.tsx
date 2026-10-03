@@ -38,4 +38,17 @@ describe("RhTable", () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("APELLIDO DOS\t24/09/2026"));
     expect(screen.getByText("Copia todas las filas del filtro, no solo esta página.")).toBeInTheDocument();
   });
+
+  it("starts copying inside the click, before every page has loaded", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("ClipboardItem", class {
+      constructor(readonly items: Record<string, Promise<Blob>>) {}
+    });
+    const write = vi.spyOn(navigator.clipboard, "write");
+    const pending = new Promise<typeof rows>(() => undefined);
+    render(<RhTable rows={rows} loadAll={() => pending} />);
+    await user.click(screen.getByRole("button", { name: "Copiar para RH" }));
+    expect(write).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
 });
