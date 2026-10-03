@@ -1,4 +1,5 @@
 import type {
+  DayOut,
   ExceptionKind,
   Incident,
   IncidentStatus,
@@ -89,3 +90,11 @@ export const STATUS_LABELS: Record<IncidentStatus, string> = {
   justified: "Justificadas",
   unjustified: "Sin justificar",
 };
+
+export function incidentAction(day: DayOut): "Justificar" | "Editar" | "Resolver" | null {
+  const incident = incidentFor(day.outcome);
+  if (incident && day.justification_id === null) return "Justificar";
+  if (incident || day.outcome === "JUSTIFIED") return "Editar";
+  if (day.outcome === "UNREGISTERED_CHANGE") return "Resolver";
+  return null;
+}
