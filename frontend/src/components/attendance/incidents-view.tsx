@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useIncidents } from "@/lib/api/attendance";
+import { useIncidents, useRhRows } from "@/lib/api/attendance";
 import { useEmployees } from "@/lib/api/config";
 import type { DayOut, EmployeeRef } from "@/lib/api/types";
 import { addDays, formatDay, formatTime, weekStart } from "@/lib/dates";
@@ -58,7 +58,9 @@ function RangeForm({ from, to }: { from: string; to: string }) {
 }
 
 function Incidents({ from, to }: { from: string; to: string }) {
-  const incidents = useIncidents(from, to);
+  const params = { from, to, status: "all" as const, page: 1, limit: 100 };
+  const incidents = useIncidents(params);
+  const rhRows = useRhRows(params);
   const employees = useEmployees();
   const [selection, setSelection] = useState<DaySelection | null>(null);
   const byId = new Map<number, EmployeeRef>((employees.data ?? []).map((e) => [e.id, e]));
@@ -66,7 +68,7 @@ function Incidents({ from, to }: { from: string; to: string }) {
     const employee = byId.get(day.employee_id);
     if (employee) setSelection({ day, employee });
   };
-  const unresolved = incidents.data?.incidents.filter((d) => d.outcome === "UNREGISTERED_CHANGE") ?? [];
+  const unresolved = incidents.data?.data.items.filter((d) => d.outcome === "UNREGISTERED_CHANGE") ?? [];
 
   return (
     <div className="space-y-6">
@@ -78,10 +80,11 @@ function Incidents({ from, to }: { from: string; to: string }) {
       {incidents.isError && <QueryError error={incidents.error} onRetry={() => incidents.refetch()} />}
       {incidents.data && (
         <>
-          <WarningsList warnings={incidents.data.warnings} />
+          <WarningsList warnings={incidents.data.data.warnings} />
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Para capturar en RH</h2>
-            <RhTable rows={incidents.data.rh_rows} />
+            {rhRows.isError && <QueryError error={rhRows.error} onRetry={() => rhRows.refetch()} />}
+            {rhRows.data && <RhTable rows={rhRows.data.data.items} />}
           </section>
           {unresolved.length > 0 && (
             <section className="space-y-2">
@@ -91,7 +94,7 @@ function Incidents({ from, to }: { from: string; to: string }) {
           )}
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Todas las incidencias</h2>
-            <IncidentTable days={incidents.data.incidents} byId={byId} onSelect={select} />
+            <IncidentTable days={incidents.data.data.items} byId={byId} onSelect={select} />
           </section>
         </>
       )}

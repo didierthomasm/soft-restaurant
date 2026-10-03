@@ -1,21 +1,33 @@
-"use client";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-
-import { api, unwrap } from "./client";
+import { api, unwrap, unwrapPage } from "./client";
 import { useInvalidate } from "./invalidate";
 import type {
   ExceptionCreate,
+  ExceptionUpdate,
   Grouping,
+  IncidentStatus,
+  IncidentType,
   JustificationCreate,
   JustificationUpdate,
   RestSwapCreate,
 } from "./types";
 
+export type IncidentApiParams = {
+  from: string;
+  to: string;
+  employee_id?: number;
+  type?: IncidentType[];
+  status: IncidentStatus;
+  page: number;
+  limit: number;
+};
+
 export const attendanceKeys = {
   all: ["attendance"] as const,
   calendar: (from: string, to: string) => ["attendance", "calendar", from, to] as const,
-  incidents: (from: string, to: string) => ["attendance", "incidents", from, to] as const,
+  incidents: (params: IncidentApiParams) => ["attendance", "incidents", params] as const,
+  rhRows: (params: IncidentApiParams) => ["attendance", "rh-rows", params] as const,
   summary: (from: string, to: string, group: string) =>
     ["attendance", "summary", from, to, group] as const,
 };
@@ -27,10 +39,19 @@ export function useCalendar(from: string, to: string) {
   });
 }
 
-export function useIncidents(from: string, to: string) {
+export function useIncidents(params: IncidentApiParams) {
   return useQuery({
-    queryKey: attendanceKeys.incidents(from, to),
-    queryFn: () => unwrap(api.GET("/attendance/incidents", { params: { query: { from, to } } })),
+    queryKey: attendanceKeys.incidents(params),
+    queryFn: () => unwrapPage(api.GET("/attendance/incidents", { params: { query: params } })),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useRhRows(params: IncidentApiParams) {
+  return useQuery({
+    queryKey: attendanceKeys.rhRows(params),
+    queryFn: () => unwrapPage(api.GET("/attendance/rh-rows", { params: { query: params } })),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -89,6 +110,31 @@ export function useCreateException() {
   const invalidate = useInvalidate(attendanceKeys.all, ["exceptions"]);
   return useMutation({
     mutationFn: (body: ExceptionCreate) => unwrap(api.POST("/exceptions", { body })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateException() {
+  const invalidate = useInvalidate(attendanceKeys.all, ["exceptions"]);
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: ExceptionUpdate }) =>
+      unwrap(
+        api.PATCH("/exceptions/{exception_id}", {
+          params: { path: { exception_id: id } },
+          body,
+        }),
+      ),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteException() {
+  const invalidate = useInvalidate(attendanceKeys.all, ["exceptions"]);
+  return useMutation({
+    mutationFn: (id: number) =>
+      unwrap(
+        api.DELETE("/exceptions/{exception_id}", { params: { path: { exception_id: id } } }),
+      ),
     onSuccess: invalidate,
   });
 }

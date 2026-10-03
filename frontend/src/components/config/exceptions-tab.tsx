@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCreateException } from "@/lib/api/attendance";
-import { useDeleteException, useEmployees, useExceptions } from "@/lib/api/config";
+import { useCreateException, useDeleteException } from "@/lib/api/attendance";
+import { useEmployees, useExceptions } from "@/lib/api/config";
 import { addDays, formatDate, todayIso } from "@/lib/dates";
 import { EXCEPTION_KIND_LABELS, RH_LABELS } from "@/lib/labels";
 

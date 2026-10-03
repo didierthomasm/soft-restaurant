@@ -17,6 +17,7 @@ function day(overrides: Partial<DayOut>): DayOut {
     rh_type: null,
     justification_id: null,
     comment: "",
+    exception: null,
     ...overrides,
   };
 }

@@ -85,17 +85,6 @@ export function useExceptions(from: string, to: string) {
   });
 }
 
-export function useDeleteException() {
-  const invalidate = useInvalidate(["exceptions"], ATTENDANCE);
-  return useMutation({
-    mutationFn: (id: number) =>
-      unwrap(
-        api.DELETE("/exceptions/{exception_id}", { params: { path: { exception_id: id } } }),
-      ),
-    onSuccess: invalidate,
-  });
-}
-
 export function useSettings() {
   return useQuery({
     queryKey: configKeys.settings,

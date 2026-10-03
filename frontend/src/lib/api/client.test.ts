@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiError, isSrUnavailable, unwrap } from "./client";
+import { ApiError, isSrUnavailable, unwrap, unwrapPage } from "./client";
 
 const response = (status: number) => ({ status }) as Response;
 
@@ -44,5 +44,28 @@ describe("unwrap", () => {
   it("maps network failures to NETWORK_ERROR", async () => {
     const request = Promise.reject(new TypeError("fetch failed"));
     await expect(unwrap(request)).rejects.toMatchObject({ code: "NETWORK_ERROR", status: 0 });
+  });
+});
+
+describe("unwrapPage", () => {
+  it("returns the data and the page meta", async () => {
+    const body = { success: true, data: { items: [1] }, meta: { total: 30, page: 2, limit: 25 } };
+    const request = Promise.resolve({ data: body, response: response(200) });
+    await expect(unwrapPage(request)).resolves.toEqual({
+      data: { items: [1] },
+      page: { total: 30, page: 2, limit: 25 },
+    });
+  });
+
+  it("rejects a successful response without page meta", async () => {
+    const body = { success: true, data: { items: [] }, meta: null };
+    const request = Promise.resolve({ data: body, response: response(200) });
+    await expect(unwrapPage(request)).rejects.toMatchObject({ code: "BAD_RESPONSE" });
+  });
+
+  it("throws the backend error like unwrap", async () => {
+    const body = { success: false, data: null, error: { code: "VALIDATION_ERROR", message: "x" } };
+    const request = Promise.resolve({ error: body, response: response(422) });
+    await expect(unwrapPage(request)).rejects.toMatchObject({ code: "VALIDATION_ERROR", status: 422 });
   });
 });
