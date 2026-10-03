@@ -1,8 +1,9 @@
+from dataclasses import replace
 from datetime import date
 
 from tabernas.domain.justify import apply_justifications, default_rh_type
-from tabernas.domain.types import Incident, Outcome, RhType, WarningCode
-from tests.domain.factories import DAY, justification, result
+from tabernas.domain.types import ExceptionKind, Incident, Outcome, RhType, WarningCode
+from tests.domain.factories import DAY, exception, justification, result
 
 
 def test_default_rh_types() -> None:
@@ -43,3 +44,10 @@ def test_justification_for_other_employee_or_day_does_not_apply() -> None:
     results, warnings = apply_justifications([original], others)
     assert results == [original]
     assert len(warnings) == 2
+
+
+def test_justified_manual_absence_keeps_its_exception() -> None:
+    manual = exception(ExceptionKind.MANUAL_ABSENCE, DAY)
+    absent = replace(result(Outcome.ABSENT), exception=manual)
+    applied, _ = apply_justifications([absent], [justification(Incident.ABSENT, RhType.PERMISO)])
+    assert (applied[0].exception, applied[0].justification_id) == (manual, 7)

@@ -140,3 +140,32 @@ def test_output_is_sorted_by_employee_then_day() -> None:
     )
     assert [(p.employee_id, p.day.day) for p in planned][:2] == [(1, 21), (1, 22)]
     assert planned[7].employee_id == 2
+
+
+def test_each_employee_exception_travels_with_its_day() -> None:
+    absence = exception(
+        ExceptionKind.WORK_TO_ABSENCE,
+        date(2026, 9, 23),
+        until=date(2026, 9, 24),
+        rh_type=RhType.VACACIONES,
+        id=5,
+    )
+    manual = exception(ExceptionKind.MANUAL_ABSENCE, date(2026, 9, 25), id=6)
+    extra = exception(ExceptionKind.REST_TO_WORK, date(2026, 9, 22), id=7)  # Tue = rest
+    present = exception(ExceptionKind.PRESENT_NO_CHECKIN, date(2026, 9, 26), id=8)
+    planned, _ = planned_calendar(
+        [employee()], [rule()], [absence, manual, extra, present], *WEEK_39
+    )
+    days = by_day(planned)
+    assert days[date(2026, 9, 23)].exception == absence
+    assert days[date(2026, 9, 24)].exception == absence  # same object for the whole range
+    assert days[date(2026, 9, 25)].exception == manual
+    assert days[date(2026, 9, 22)].exception == extra
+    assert days[date(2026, 9, 26)].exception == present
+    assert days[date(2026, 9, 21)].exception is None
+
+
+def test_store_closure_is_not_the_employee_exception() -> None:
+    closure = exception(ExceptionKind.STORE_CLOSED, date(2026, 9, 24), id=1)
+    planned, _ = planned_calendar([employee()], [rule()], [closure], *WEEK_39)
+    assert by_day(planned)[date(2026, 9, 24)].exception is None

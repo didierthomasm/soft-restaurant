@@ -82,22 +82,41 @@ def _plan_day(
     if closure is not None:
         return PlannedDay(employee_id, day, Planned.CLOSED, comment=closure.comment)
     covering = [e for e in exceptions if covers(e, day)]
-    present = _find(covering, ExceptionKind.PRESENT_NO_CHECKIN) is not None
+    present = _find(covering, ExceptionKind.PRESENT_NO_CHECKIN)
     absence = _find(covering, ExceptionKind.WORK_TO_ABSENCE)
     if absence is not None:
         return PlannedDay(
-            employee_id, day, Planned.ABSENCE, rh_type=absence.rh_type, comment=absence.comment
+            employee_id,
+            day,
+            Planned.ABSENCE,
+            rh_type=absence.rh_type,
+            comment=absence.comment,
+            exception=absence,
         )
     manual = _find(covering, ExceptionKind.MANUAL_ABSENCE)
     if manual is not None:
         return PlannedDay(
-            employee_id, day, Planned.WORK, manual_absence=True, comment=manual.comment
+            employee_id,
+            day,
+            Planned.WORK,
+            manual_absence=True,
+            comment=manual.comment,
+            exception=manual,
         )
     extra_work = _find(covering, ExceptionKind.REST_TO_WORK)
     if extra_work is not None:
         return PlannedDay(
-            employee_id, day, Planned.WORK, present_no_checkin=present, comment=extra_work.comment
+            employee_id,
+            day,
+            Planned.WORK,
+            present_no_checkin=present is not None,
+            comment=extra_work.comment,
+            exception=extra_work,
         )
     return PlannedDay(
-        employee_id, day, planned_by_rule(rule_for(rules, day), day), present_no_checkin=present
+        employee_id,
+        day,
+        planned_by_rule(rule_for(rules, day), day),
+        present_no_checkin=present is not None,
+        exception=present,
     )
