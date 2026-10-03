@@ -49,6 +49,27 @@ describe("WeekGrid", () => {
     expect(onSelect).toHaveBeenCalledWith(calendar.days[0], calendar.employees[0]);
     expect(screen.getByRole("button", { name: /mar 22\/09/ })).toBeDisabled();
   });
+  it("marks days changed by an exception", () => {
+    const present = {
+      ...calendar,
+      days: [
+        day({
+          exception: {
+            id: 3,
+            kind: "PRESENT_NO_CHECKIN",
+            date_from: "2026-09-21",
+            date_to: "2026-09-21",
+            rh_type: null,
+            comment: "",
+          },
+        }),
+      ],
+    };
+    render(<WeekGrid calendar={present} onSelect={() => undefined} />);
+    expect(screen.getByRole("button", { name: /lun 21\/09: A tiempo \(excepción\)/ })).toHaveTextContent(
+      "Excepción",
+    );
+  });
 });
 
 describe("findDaySelection", () => {
