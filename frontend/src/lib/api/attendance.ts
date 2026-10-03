@@ -1,5 +1,8 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 
+import { COPY_PAGE_SIZE, type IncidentQuery, toApiParams } from "@/lib/incident-query";
+import { collectAll } from "@/lib/pages";
+
 import { api, unwrap, unwrapPage } from "./client";
 import { useInvalidate } from "./invalidate";
 import type {
@@ -11,6 +14,7 @@ import type {
   JustificationCreate,
   JustificationUpdate,
   RestSwapCreate,
+  RhRowOut,
 } from "./types";
 
 export type IncidentApiParams = {
@@ -136,5 +140,13 @@ export function useDeleteException() {
         api.DELETE("/exceptions/{exception_id}", { params: { path: { exception_id: id } } }),
       ),
     onSuccess: invalidate,
+  });
+}
+
+export function fetchAllRhRows(query: IncidentQuery): Promise<RhRowOut[]> {
+  return collectAll(async (page) => {
+    const params = toApiParams(query, page, COPY_PAGE_SIZE);
+    const result = await unwrapPage(api.GET("/attendance/rh-rows", { params: { query: params } }));
+    return { items: result.data.items, total: result.page.total };
   });
 }
