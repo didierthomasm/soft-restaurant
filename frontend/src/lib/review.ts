@@ -9,6 +9,7 @@ import type {
   WarningCode,
 } from "@/lib/api/types";
 
+import { weekHref } from "./calendar";
 import { formatDate, isoWeekMonday, weekStart } from "./dates";
 import { WARNING_LABELS } from "./labels";
 
@@ -97,7 +98,7 @@ export function actionHref(finding: FindingOut, weekMonday: string): string | nu
   if (finding.kind === "CONFIG_WARNING") return "/configuracion";
   if (finding.employee_id === null || finding.days.length === 0) return null;
   const day = finding.days.find((d) => d >= weekMonday) ?? finding.days[finding.days.length - 1];
-  return `/semana?desde=${weekMonday}&empleado=${finding.employee_id}&dia=${day}`;
+  return weekHref(weekMonday, { employeeId: finding.employee_id, day });
 }
 
 export function actionLabel(finding: FindingOut, item: NarrativeItemOut | null): string {

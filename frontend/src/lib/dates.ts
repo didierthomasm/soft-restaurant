@@ -92,3 +92,22 @@ export function isoWeekMonday(year: number, week: number): string {
 export function formatDateTime(datetime: string | null | undefined): string {
   return datetime ? `${formatDate(datetime.slice(0, 10))} ${formatTime(datetime)}` : "";
 }
+
+export const MONTH_NAMES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+export function isIsoMonth(value: string | undefined | null): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}$/.test(value) && isIsoDate(`${value}-01`);
+}
+
+export function formatMonth(month: string): string {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return `${MONTH_NAMES[monthNumber - 1]} ${year}`;
+}
+
+export function isWeekend(value: string): boolean {
+  const weekday = parseIsoDate(value).getDay();
+  return weekday === 0 || weekday === 6;
+}

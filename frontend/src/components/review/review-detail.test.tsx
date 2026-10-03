@@ -69,7 +69,7 @@ describe("ReviewDetail", () => {
     expect(within(high).getByText("EMPLEADO G faltó el miércoles.")).toBeInTheDocument();
     expect(within(high).getByRole("link", { name: "Justificar" })).toHaveAttribute(
       "href",
-      "/semana?desde=2026-09-21&empleado=7&dia=2026-09-23",
+      "/calendario?vista=semana&desde=2026-09-21&empleado=7&dia=2026-09-23",
     );
     const low = screen.getByRole("region", { name: "Prioridad baja" });
     expect(within(low).getByText(/Falta nombre en RH · 1 veces/)).toBeInTheDocument();

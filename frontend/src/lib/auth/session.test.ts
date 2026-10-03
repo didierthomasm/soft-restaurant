@@ -51,7 +51,7 @@ describe("safeNext", () => {
     "/.//evil.com",
     "/%2e//evil.com",
     "semana",
-  ])("falls back to /semana for %s", (value) => {
-    expect(safeNext(value)).toBe("/semana");
+  ])("falls back to /calendario for %s", (value) => {
+    expect(safeNext(value)).toBe("/calendario");
   });
 });
