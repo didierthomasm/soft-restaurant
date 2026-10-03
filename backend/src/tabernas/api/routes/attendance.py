@@ -7,8 +7,9 @@ from pydantic import BaseModel, ConfigDict
 
 from tabernas.api.deps import ClockDep, SessionDep, SrSourceDep
 from tabernas.api.envelope import Envelope, ok
+from tabernas.domain.incident_filter import INCIDENT_OUTCOMES
 from tabernas.domain.summary import EmployeeSummary, Grouping, summarize
-from tabernas.domain.types import Area, Outcome, Planned, RhType, WarningCode
+from tabernas.domain.types import Area, ExceptionKind, Outcome, Planned, RhType, WarningCode
 from tabernas.export.xlsx import XLSX_MEDIA_TYPE, build_workbook
 from tabernas.services.attendance import AttendanceReport, AttendanceService
 
@@ -16,9 +17,6 @@ router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 StartQuery = Annotated[date, Query(alias="from")]
 EndQuery = Annotated[date, Query(alias="to")]
-INCIDENT_OUTCOMES = frozenset(
-    {Outcome.LATE, Outcome.ABSENT, Outcome.UNREGISTERED_CHANGE, Outcome.JUSTIFIED}
-)
 
 
 class _FromAttributes(BaseModel):
@@ -32,6 +30,15 @@ class EmployeeRef(_FromAttributes):
     area: Area
 
 
+class ExceptionRef(_FromAttributes):
+    id: int
+    kind: ExceptionKind
+    date_from: date
+    date_to: date
+    rh_type: RhType | None
+    comment: str
+
+
 class DayOut(_FromAttributes):
     employee_id: int
     day: date
@@ -42,6 +49,7 @@ class DayOut(_FromAttributes):
     rh_type: RhType | None
     justification_id: int | None
     comment: str
+    exception: ExceptionRef | None
 
 
 class WarningOut(_FromAttributes):

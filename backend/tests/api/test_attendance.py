@@ -32,6 +32,25 @@ def test_calendar_has_one_day_per_employee(demo_client: TestClient) -> None:
     assert not {w["code"] for w in data["warnings"]} & {"NO_REST_RULE", "UNMAPPED_CHECKIN"}
 
 
+def test_calendar_days_carry_their_exception(demo_client: TestClient) -> None:
+    employee_id = demo_client.get("/employees").json()["data"][0]["id"]
+    body = {
+        "kind": "WORK_TO_ABSENCE",
+        "employee_id": employee_id,
+        "date_from": "2026-09-23",
+        "date_to": "2026-09-24",
+        "rh_type": "VACACIONES",
+        "comment": "Viaje",
+    }
+    created = demo_client.post("/exceptions", json=body).json()["data"]
+    days = demo_client.get("/attendance/calendar", params=WEEK).json()["data"]["days"]
+    own = {d["day"]: d for d in days if d["employee_id"] == employee_id}
+    expected = {k: created[k] for k in ("id", "kind", "date_from", "date_to", "rh_type", "comment")}
+    assert own["2026-09-23"]["exception"] == expected
+    assert own["2026-09-24"]["exception"] == expected
+    assert own["2026-09-21"]["exception"] is None
+
+
 def test_incidents_and_rh_rows_are_consistent(demo_client: TestClient) -> None:
     data = demo_client.get("/attendance/incidents", params=WEEK).json()["data"]
     assert {d["outcome"] for d in data["incidents"]} <= INCIDENT_OUTCOMES
