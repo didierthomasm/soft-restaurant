@@ -1,5 +1,6 @@
 from datetime import date
 from io import BytesIO
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -54,7 +55,7 @@ def test_calendar_days_carry_their_exception(demo_client: TestClient) -> None:
 MONTH = {"from": "2026-09-01", "to": "2026-09-27"}
 
 
-def _items(client: TestClient, path: str, **params: object) -> list[dict[str, object]]:
+def _items(client: TestClient, path: str, **params: str | int | list[str]) -> list[dict[str, Any]]:
     response = client.get(path, params={**MONTH, "limit": 100, **params})
     assert response.status_code == 200, response.text
     return response.json()["data"]["items"]
@@ -136,7 +137,7 @@ def test_rh_rows_are_paginated(demo_client: TestClient) -> None:
 @pytest.mark.parametrize(
     "bad", [{"limit": 101}, {"limit": 0}, {"page": 0}, {"type": "OK"}, {"status": "todas"}]
 )
-def test_bad_incident_queries_are_422(client: TestClient, bad: dict[str, object]) -> None:
+def test_bad_incident_queries_are_422(client: TestClient, bad: dict[str, str | int]) -> None:
     for path in ("/attendance/incidents", "/attendance/rh-rows"):
         assert client.get(path, params={**WEEK, **bad}).status_code == 422
 
