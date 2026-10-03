@@ -3,14 +3,24 @@
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
+import { ExceptionEdit } from "@/components/attendance/exception-edit";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { FormError, Loading, QueryError } from "@/components/feedback";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCreateException, useDeleteException } from "@/lib/api/attendance";
 import { useEmployees, useExceptions } from "@/lib/api/config";
+import type { ExceptionOut } from "@/lib/api/types";
 import { addDays, formatDate, todayIso } from "@/lib/dates";
 import { EXCEPTION_KIND_LABELS, RH_LABELS } from "@/lib/labels";
 
@@ -31,7 +41,7 @@ export function ExceptionsTab() {
       <ClosureForm />
       <p className="text-sm text-muted-foreground">
         Excepciones del {formatDate(from)} al {formatDate(to)}. Las de un empleado se agregan
-        desde la vista Semana (clic en el día).
+        desde el Calendario (clic en el día).
       </p>
       <FormError error={remove.error} />
       {exceptions.isPending && <Loading />}
@@ -63,7 +73,11 @@ export function ExceptionsTab() {
                 </TableCell>
                 <TableCell>{exception.rh_type ? RH_LABELS[exception.rh_type] : ""}</TableCell>
                 <TableCell>{exception.comment}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="space-x-2 text-right">
+                  <EditExceptionDialog
+                    exception={exception}
+                    owner={exception.employee_id === null ? "Todos" : (names.get(exception.employee_id) ?? "")}
+                  />
                   <ConfirmDeleteButton
                     label={`Eliminar ${EXCEPTION_KIND_LABELS[exception.kind]} del ${formatDate(exception.date_from)}`}
                     pending={remove.isPending}
@@ -124,5 +138,26 @@ function ClosureForm() {
         </Button>
       </div>
     </form>
+  );
+}
+
+function EditExceptionDialog({ exception, owner }: { exception: ExceptionOut; owner: string }) {
+  const [open, setOpen] = useState(false);
+  const kind = EXCEPTION_KIND_LABELS[exception.kind];
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" aria-label={`Editar ${kind} del ${formatDate(exception.date_from)}`}>
+          Editar
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar excepción</DialogTitle>
+          <DialogDescription>{owner}</DialogDescription>
+        </DialogHeader>
+        <ExceptionEdit exception={exception} onDone={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
   );
 }
