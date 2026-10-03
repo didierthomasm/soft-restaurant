@@ -1,4 +1,12 @@
-import type { ExceptionKind, Incident, Outcome, RhType, WarningCode } from "@/lib/api/types";
+import type {
+  ExceptionKind,
+  Incident,
+  IncidentStatus,
+  IncidentType,
+  Outcome,
+  RhType,
+  WarningCode,
+} from "@/lib/api/types";
 
 export const OUTCOME_LABELS: Record<Outcome, string> = {
   OK: "A tiempo",
@@ -73,3 +81,11 @@ export function incidentFor(outcome: Outcome): Incident | null {
   if (outcome === "ABSENT") return "ABSENT";
   return null;
 }
+
+export const INCIDENT_TYPES: IncidentType[] = ["LATE", "ABSENT", "UNREGISTERED_CHANGE", "JUSTIFIED"];
+
+export const STATUS_LABELS: Record<IncidentStatus, string> = {
+  all: "Todas",
+  justified: "Justificadas",
+  unjustified: "Sin justificar",
+};
