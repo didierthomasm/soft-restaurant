@@ -110,3 +110,8 @@ export function incidentAction(day: DayOut): "Justificar" | "Editar" | "Resolver
   if (day.outcome === "UNREGISTERED_CHANGE") return "Resolver";
   return null;
 }
+
+/** Cell color: a justified late or absence reads as resolved (green), not as an open incident. */
+export function dayStyle(day: Pick<DayOut, "outcome" | "justification_id">): string {
+  return day.justification_id !== null ? OUTCOME_STYLES.OK : OUTCOME_STYLES[day.outcome];
+}
