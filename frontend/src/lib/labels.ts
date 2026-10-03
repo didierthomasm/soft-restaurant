@@ -33,6 +33,18 @@ export const OUTCOME_STYLES: Record<Outcome, string> = {
   FUTURE: "text-muted-foreground",
 };
 
+export const OUTCOME_SHORT: Record<Outcome, string> = {
+  OK: "A",
+  LATE: "R",
+  ABSENT: "F",
+  UNREGISTERED_CHANGE: "C",
+  REST: "D",
+  CLOSED: "X",
+  JUSTIFIED: "J",
+  PENDING: "P",
+  FUTURE: "",
+};
+
 export const RH_LABELS: Record<RhType, string> = {
   RETARDO: "Retardo",
   FALTA_INJUSTIFICADA: "Falta injustificada",

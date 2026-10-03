@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { DayOut } from "@/lib/api/types";
 
-import { INCIDENT_TYPES, JUSTIFICATION_RH_TYPES, STATUS_LABELS, incidentAction, incidentFor } from "./labels";
+import {
+  INCIDENT_TYPES,
+  JUSTIFICATION_RH_TYPES,
+  OUTCOME_SHORT,
+  STATUS_LABELS,
+  incidentAction,
+  incidentFor,
+} from "./labels";
 
 describe("labels", () => {
   it("maps outcomes to justifiable incidents", () => {
@@ -52,5 +59,14 @@ describe("incidentAction", () => {
     expect(incidentAction({ ...base, outcome: "JUSTIFIED", planned: "ABSENCE" })).toBe("Editar");
     expect(incidentAction({ ...base, outcome: "UNREGISTERED_CHANGE", planned: "REST" })).toBe("Resolver");
     expect(incidentAction({ ...base, outcome: "OK" })).toBeNull();
+  });
+});
+
+describe("OUTCOME_SHORT", () => {
+  it("abbreviates every visible outcome with a distinct letter", () => {
+    const shown = ["OK", "LATE", "ABSENT", "UNREGISTERED_CHANGE", "JUSTIFIED", "REST", "CLOSED"] as const;
+    const letters = shown.map((outcome) => OUTCOME_SHORT[outcome]);
+    expect(letters).toEqual(["A", "R", "F", "C", "J", "D", "X"]);
+    expect(new Set(letters).size).toBe(letters.length);
   });
 });
