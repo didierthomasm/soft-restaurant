@@ -6,7 +6,9 @@ import {
   INCIDENT_TYPES,
   JUSTIFICATION_RH_TYPES,
   OUTCOME_SHORT,
+  OUTCOME_STYLES,
   STATUS_LABELS,
+  dayStyle,
   incidentAction,
   incidentFor,
 } from "./labels";
@@ -68,5 +70,22 @@ describe("OUTCOME_SHORT", () => {
     const letters = shown.map((outcome) => OUTCOME_SHORT[outcome]);
     expect(letters).toEqual(["A", "R", "F", "C", "J", "D", "X"]);
     expect(new Set(letters).size).toBe(letters.length);
+  });
+});
+
+describe("dayStyle", () => {
+  const day = (outcome: "LATE" | "ABSENT", justification_id: number | null) => ({
+    outcome,
+    justification_id,
+  });
+
+  it("paints justified lates and absences green, like an on-time day", () => {
+    expect(dayStyle(day("LATE", 4))).toBe(OUTCOME_STYLES.OK);
+    expect(dayStyle(day("ABSENT", 4))).toBe(OUTCOME_STYLES.OK);
+  });
+
+  it("keeps the outcome color when nothing is justified", () => {
+    expect(dayStyle(day("LATE", null))).toBe(OUTCOME_STYLES.LATE);
+    expect(dayStyle(day("ABSENT", null))).toBe(OUTCOME_STYLES.ABSENT);
   });
 });

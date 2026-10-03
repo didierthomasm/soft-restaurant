@@ -1,6 +1,6 @@
 import type { CalendarOut, DayOut, EmployeeRef } from "@/lib/api/types";
 import { daysBetween, formatDay, formatTime, isWeekend } from "@/lib/dates";
-import { OUTCOME_LABELS, OUTCOME_SHORT, OUTCOME_STYLES } from "@/lib/labels";
+import { OUTCOME_LABELS, OUTCOME_SHORT, dayStyle } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -76,7 +76,7 @@ function MonthCell({ day, onClick }: { day: DayOut; onClick: () => void }) {
       className={cn(
         "flex h-9 w-full items-center justify-center rounded text-[11px] font-medium",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
-        OUTCOME_STYLES[day.outcome],
+        dayStyle(day),
         marked && "ring-1 ring-inset ring-sky-500",
       )}
     >

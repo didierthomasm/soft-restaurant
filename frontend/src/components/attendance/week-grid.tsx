@@ -1,6 +1,6 @@
 import type { CalendarOut, DayOut, EmployeeRef } from "@/lib/api/types";
 import { daysBetween, formatDay, formatTime } from "@/lib/dates";
-import { OUTCOME_LABELS, OUTCOME_STYLES } from "@/lib/labels";
+import { OUTCOME_LABELS, dayStyle } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 export type DaySelection = { day: DayOut; employee: EmployeeRef };
@@ -75,7 +75,7 @@ function DayCell({ day, onClick }: { day: DayOut; onClick: () => void }) {
       className={cn(
         "flex h-14 w-full flex-col items-center justify-center rounded-md text-xs",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default",
-        OUTCOME_STYLES[day.outcome],
+        dayStyle(day),
       )}
     >
       <span className="font-medium">{label}</span>
